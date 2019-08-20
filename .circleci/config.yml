@@ -1,0 +1,35 @@
+version: 2
+jobs:
+  build:
+    docker:
+      - image: ftps:with_git
+    steps:
+      - checkout
+      - run:
+          name: 'Setup virtual env'
+          command: |
+            python3 -m venv /usr/local/share/virtualenvs/tap-ftp
+            source /usr/local/share/virtualenvs/tap-ftp/bin/activate
+            # pip install -U 'pip<19.2' setuptools
+            # pip install -e .
+      - run:
+          name: 'Smoke Tests'
+          command: |
+            source /usr/local/share/virtualenvs/tap-ftp/bin/activate
+            python /opt/code/tap-ftp/tests/smoke_tests 127.0.0.1
+            
+workflows:
+  version: 2
+  commit:
+    jobs:
+      - build
+  build_daily:
+    triggers:
+      - schedule:
+          cron: "0 0 * * *"
+          filters:
+            branches:
+              only:
+                - master
+    jobs:
+      - build
