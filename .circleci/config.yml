@@ -2,22 +2,26 @@ version: 2
 jobs:
   build:
     docker:
-      - image: ftps:with_git
+      - image: ubuntu:18.04
+      - image: ftps_server
     steps:
+      - run:
+          name: 'Install Container Dependancies'
+          command: |
+            apt update && apt install -y python3 python3-pip python3-venv git curl
       - checkout
       - run:
-          name: 'Setup virtual env'
+          name: 'Install Docker client'
           command: |
-            python3 -m venv /usr/local/share/virtualenvs/tap-ftp
-            source /usr/local/share/virtualenvs/tap-ftp/bin/activate
-            # pip install -U 'pip<19.2' setuptools
-            # pip install -e .
+            VER="17.03.0-ce"
+            curl -L -o /tmp/docker-$VER.tgz https://download.docker.com/linux/static/stable/x86_64/docker-$VER.tgz
+            tar -xz -C /tmp -f /tmp/docker-$VER.tgz
+            mv /tmp/docker/* /usr/bin
       - run:
           name: 'Smoke Tests'
           command: |
-            source /usr/local/share/virtualenvs/tap-ftp/bin/activate
-            python /opt/code/tap-ftp/tests/smoke_tests 127.0.0.1
-            
+            python3 ./tests/smoke_tests localhost
+
 workflows:
   version: 2
   commit:
