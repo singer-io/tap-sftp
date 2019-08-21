@@ -1,0 +1,16 @@
+#!/usr/bin/env python3
+from ftplib import FTP
+import sys
+
+HOST = sys.argv[1]
+USER = 'ftptest'
+PASS = 'ftptest'
+
+def connect():
+    ftp = FTP(host=HOST, timeout=5)
+    ftp.login(user=USER, passwd=PASS)
+    return ftp
+
+ftp = connect()
+
+print(ftp.pwd())

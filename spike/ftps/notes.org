@@ -1,0 +1,11 @@
+* FTPS
+  - spikes/ftps/connect.py
+    - Works to connect to the ftp server
+    - Does NOT work on commands that require opening a second connection
+      - This is why some commands are working and some are not
+      - docker run -p 30000-30100:30000-30100 ftps
+        - This command resolves the issue of running the ftp commands
+        - The important part being ~-p 30000-30100:30000-30100~
+  - [1/1] QUESTIONS:
+    - [X] How can we get the FTP_TLS object to run commands that require a second port?
+      - Answer: We don't have to worry about this once we enable port forwarding

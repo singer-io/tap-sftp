@@ -16,9 +16,14 @@ def connect():
 
 
 ftp = connect()
+
+# This needs to happen based on the way set up the FTP server
 ftp.chdir('upload')
+
 data_file = ftp.open('test_data.csv', mode='r', bufsize=-1)
 
-lines = [x for x in data_file.readlines()]
+# We expect this to be the number of lines in the csv file
+# And we assume that the first column of the row is an `id`
+print([x.split(',')[0] for x in data_file.readlines()])
 
 ftp.close()
