@@ -10,20 +10,12 @@ Start the container
 
 Check the IP of the container
 ```
-vagrant@taps-alu1:~$ ifconfig
-docker0   Link encap:Ethernet  HWaddr 02:42:d3:c9:ce:31
-          inet addr:172.17.0.1  Bcast:172.17.255.255  Mask:255.255.0.0
-          inet6 addr: fe80::42:d3ff:fec9:ce31/64 Scope:Link
-          UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1
-          RX packets:0 errors:0 dropped:0 overruns:0 frame:0
-          TX packets:8 errors:0 dropped:0 overruns:0 carrier:0
-          collisions:0 txqueuelen:0
-          RX bytes:0 (0.0 B)  TX bytes:648 (648.0 B)
+docker inspect -f '{{.NetworkSettings.IPAddress}}' CONTAINER_NAME
 ```
 
 Connect with an sftp client:
 ```
-vagrant@taps-alu1:~$ sftp -P 2222 foo@172.17.0.1
+vagrant@taps-alu1:~$ sftp -P 2222 foo@localhost
 The authenticity of host '[172.17.0.1]:2222 ([172.17.0.1]:2222)' can't be established.
 ED25519 key fingerprint is SHA256:sgEO9dfABF707lwsS7x5nU//0n7J2TurFI5oIgwwGsU.
 Are you sure you want to continue connecting (yes/no)? yes
@@ -52,11 +44,25 @@ test_data.csv
 sftp> ^D
 ```
 
+# Setting up a server we can authenticate with ssh keys
 
-# Starting a ftps server with Docker
+Generate the key pair:
+- `ssh-keygen`
+- Specify where you want the key to live
 
-We wrote a custom dockerfile `./dockerfiles/Dockerfile`
+Upload public key
+```
+(tap-ftp) vagrant@taps-alu1:/opt/code/tap-ftp/spike$ docker cp id_rsa.pub modest_hawking:/home/foo/
+(tap-ftp) vagrant@taps-alu1:/opt/code/tap-ftp/spike$ docker exec -it modest_hawking /bin/bash
+root@ea780f579928:/# cd /home/foo
+root@ea780f579928:/home/foo# mkdir .ssh
+root@ea780f579928:/home/foo# mv id_rsa.pub .ssh/authorized_keys
+root@ea780f579928:/home/foo# exit
+```
 
-`docker build -t tag_it_something .`
-
-
+Test it with `spike.py`:
+```
+$ python -i spike.py
+>>> ftp = connect_with_key()
+>>> ftp.listdir()
+```

@@ -1,29 +1,37 @@
 #!/usr/bin/env python3
-from ftplib import FTP
 import paramiko
 
 
-CONNECTION_HOST = '172.17.0.1'
-CONNECTION_PORT = 2222
-CONNECTION_PASS = 'pass'
-CONNECTION_USER = 'foo'
+HOST = '172.17.0.2'
+PORT = 22
+PASS = 'pass'
+USER = 'foo'
 
-def connect():
-    transport = paramiko.Transport((CONNECTION_HOST, CONNECTION_PORT))
-    transport.connect(username=CONNECTION_USER, password=CONNECTION_PASS)
+def connect(host=HOST, port=PORT, user=USER, password=PASS):
+    transport = paramiko.Transport((host, port))
+    transport.connect(username=user, password=password)
     ftp = paramiko.SFTPClient.from_transport(transport)
     return ftp
 
 
-ftp = connect()
+def connect_with_key(host=HOST, port=PORT, user=USER, password=PASS):
+    our_pkey = paramiko.RSAKey.from_private_key_file('../id_rsa', '')
+    transport = paramiko.Transport((host, port))
+    transport.connect(username=user, password=password , pkey=our_pkey)
+    return paramiko.SFTPClient.from_transport(transport)
 
-# This needs to happen based on the way set up the FTP server
-ftp.chdir('upload')
 
-data_file = ftp.open('test_data.csv', mode='r', bufsize=-1)
+def test_read(ftp):
+    # This needs to happen based on the way set up the FTP server
+    ftp.chdir('upload')
 
-# We expect this to be the number of lines in the csv file
-# And we assume that the first column of the row is an `id`
-print([x.split(',')[0] for x in data_file.readlines()])
+    data_file = ftp.open('test_data.csv', mode='r', bufsize=-1)
 
-ftp.close()
+    # We expect this to be the number of lines in the csv file
+    # And we assume that the first column of the row is an `id`
+    print([x.split(',')[0] for x in data_file.readlines()])
+
+    #ftp.close()
+
+
+#ftp = connect_with_key()
