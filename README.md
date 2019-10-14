@@ -1,4 +1,4 @@
-# tap-ftp
+# tap-sftp
 
 
 ---

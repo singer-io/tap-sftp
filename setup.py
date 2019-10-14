@@ -2,13 +2,13 @@
 from setuptools import setup
 
 setup(
-    name="tap-ftp",
-    version="1.3.4",
+    name="tap-sftp",
+    version="0.0.0",
     description="Singer.io tap for extracting data",
     author="Stitch",
     url="http://singer.io",
     classifiers=["Programming Language :: Python :: 3 :: Only"],
-    py_modules=["tap_ftp"],
+    py_modules=["tap_sftp"],
     install_requires=[
         "singer-python==5.5.1",
     ],
@@ -20,11 +20,11 @@ setup(
     },
     entry_points="""
     [console_scripts]
-    tap-ftp=tap_ftp:main
+    tap-sftp=tap_sftp:main
     """,
-    packages=["tap_ftp"],
+    packages=["tap_sftp"],
     package_data = {
-        "schemas": ["tap_ftp/schemas/*.json"]
+        "schemas": ["tap_sftp/schemas/*.json"]
     },
     include_package_data=True,
 )

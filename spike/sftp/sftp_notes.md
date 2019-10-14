@@ -27,7 +27,7 @@ sftp>
 
 Upload a file:
 ```
-vagrant@taps-alu1:/opt/code/tap-ftp/spike$ sftp -P 2222 foo@172.17.0.1
+vagrant@taps-alu1:/opt/code/tap-sftp/spike$ sftp -P 2222 foo@172.17.0.1
 foo@172.17.0.1's password:
 Connected to 172.17.0.1.
 sftp> pwd
@@ -52,8 +52,8 @@ Generate the key pair:
 
 Upload public key
 ```
-(tap-ftp) vagrant@taps-alu1:/opt/code/tap-ftp/spike$ docker cp id_rsa.pub modest_hawking:/home/foo/
-(tap-ftp) vagrant@taps-alu1:/opt/code/tap-ftp/spike$ docker exec -it modest_hawking /bin/bash
+(tap-sftp) vagrant@taps-alu1:/opt/code/tap-sftp/spike$ docker cp id_rsa.pub modest_hawking:/home/foo/
+(tap-sftp) vagrant@taps-alu1:/opt/code/tap-sftp/spike$ docker exec -it modest_hawking /bin/bash
 root@ea780f579928:/# cd /home/foo
 root@ea780f579928:/home/foo# mkdir .ssh
 root@ea780f579928:/home/foo# mv id_rsa.pub .ssh/authorized_keys
