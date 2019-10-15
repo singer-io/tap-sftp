@@ -15,7 +15,7 @@ def connect(host=HOST, port=PORT, user=USER, password=PASS):
 
 
 def connect_with_key(host=HOST, port=PORT, user=USER, password=PASS):
-    our_pkey = paramiko.RSAKey.from_private_key_file('../id_rsa', '')
+    our_pkey = paramiko.RSAKey.from_private_key_file('/home/vagrant/.ssh/id_rsa', '')
     transport = paramiko.Transport((host, port))
     transport.connect(username=user, password=password , pkey=our_pkey)
     return paramiko.SFTPClient.from_transport(transport)

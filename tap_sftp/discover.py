@@ -6,7 +6,7 @@ def discover_streams(config):
     streams = []
 
     conn = client.connection(config)
-    exported_tables = conn.get_exported_tables(config["path"])
+    exported_tables = conn.get_exported_tables(config.get("user_dir", "~/"))
 
     for exported_table in exported_tables:
         schema = sampling.get_sampled_schema_for_table(conn, config["path"], exported_table)

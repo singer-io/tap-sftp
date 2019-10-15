@@ -28,11 +28,20 @@ def start_container(name):
     populate_container(name)
 
 def configure_container(name):
+    user = os.getenv('TAP_SFTP_USERNAME')
     container_id = get_container_id(name)
-    # Copy authorized_keys and test csv files onto the docker image
+
+    # Make the .ssh folder
     CONFIGURE_COMMAND = """
-    docker cp ~/.ssh/id_rsa.pub {}:/etc/ssh/authorized_keys
-    """.format(container_id)
+    docker exec {} mkdir /home/{}/.ssh
+    """.format(container_id, user)
+    print(CONFIGURE_COMMAND)
+    proc = subprocess.run(CONFIGURE_COMMAND, shell=True)
+
+    # Copy authorized_keys
+    CONFIGURE_COMMAND = """
+    docker cp ~/.ssh/id_rsa.pub {}:/home/{}/.ssh/authorized_keys
+    """.format(container_id, user)
     print(CONFIGURE_COMMAND)
     proc = subprocess.run(CONFIGURE_COMMAND, shell=True)
 
