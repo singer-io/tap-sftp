@@ -3,10 +3,12 @@ import sys
 import singer
 
 from singer import metadata
+from singer import utils
 from tap_sftp.discover import discover_streams
-from tap_responsys.sync import sync_stream
-LOGGER = singer.get_logger()
+from tap_sftp.sync import sync_stream
 
+REQUIRED_CONFIG_KEYS = ["username", "port", "private_key_file", "host"]
+LOGGER = singer.get_logger()
 
 def do_discover(config):
     LOGGER.info("Starting discover")
@@ -16,7 +18,6 @@ def do_discover(config):
     catalog = {"streams": streams}
     json.dump(catalog, sys.stdout, indent=2)
     LOGGER.info("Finished discover")
-
 
 def stream_is_selected(mdata):
     return mdata.get((), {}).get('selected', False)
@@ -42,16 +43,14 @@ def do_sync(config, catalog, state):
 
     LOGGER.info('Done syncing.')
 
-
 @singer.utils.handle_top_exception(LOGGER)
 def main():
-    args = singer.utils.parse_args([])
-    config = CONFIG_CONTRACT(args.config)
+    args = utils.parse_args(REQUIRED_CONFIG_KEYS)
 
     if args.discover:
-        do_discover(config)
+        do_discover(args.config)
     elif args.properties:
-        do_sync(config, args.catalog, args.state)
+        do_sync(args.config, args.catalog, args.state)
 
 if __name__ == '__main__':
     main()
