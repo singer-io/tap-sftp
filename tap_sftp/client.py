@@ -13,51 +13,14 @@ from paramiko.ssh_exception import AuthenticationException
 
 LOGGER = singer.get_logger()
 
-class FileMatcher():
-    re_datetime = '(?:\d{4}-?\d\d-?\d\d_?(?:\d\d)?-?(?:\d\d)?-?(?:\d\d)?)'
-    re_table_name = '(.+?)'
-    re_file_extension = '(?:\.(?:csv|txt))'
-
-    def match_available_tables(self, filenames):
-        """
-        Match table names with optional date/time prefix or suffix, .txt or .csv extension, with
-        ready files that may or may not also include the file extension preceding the .ready extension.
-        """
-        csv_pattern = '{0}?[-_]?{1}[-_]?{0}?{2}$'.format(self.re_datetime, self.re_table_name, self.re_file_extension)
-
-        LOGGER.info("Searching for exported tables using files that match pattern: %s", csv_pattern)
-        csv_matcher = re.compile(csv_pattern)
-        ready_matcher = re.compile('{0}?[-_]?{1}[-_]?{0}?{2}?\.ready$'.format(self.re_datetime, self.re_table_name, self.re_file_extension))
-
-        csv_file_names = set([m.group(1) for m in
-                              [csv_matcher.search(o) for o in filenames]
-                              if m])
-        names_with_ready_files = set([m.group(1) for m in
-                                      [ready_matcher.search(o) for o in filenames]
-                                      if m])
-
-        return csv_file_names.intersection(names_with_ready_files)
-
-    def match_files_for_table(self, files, table_name):
-        table_pattern = '{0}?[-_]?{1}[-_]?{0}?{2}$'.format(self.re_datetime, re.escape(table_name), self.re_file_extension)
-        LOGGER.info("Searching for files for table '%s', matching pattern: %s", table_name, table_pattern)
-        matcher = re.compile(table_pattern) # Match YYYYMMDD_HH24MISStable_name.csv
-        return [f for f in files if matcher.search(f["filepath"])]
-
-    def replace_file_extension(self, filepath):
-        return re.sub('{}$'.format(self.re_file_extension), '.ready', filepath)
-
 class SFTPConnection():
     def __init__(self, host, username, password=None, private_key_file=None, port=None):
-        import ipdb
-        ipdb.set_trace()
         self.host = host
         self.username = username
         self.password = password
         self.port = int(port)or 22
         self.private_key_file = private_key_file
         self.__active_connection = False
-        self.regex = FileMatcher()
 
     def handle_backoff(details):
         LOGGER.warn("SSH Connection closed unexpectedly. Waiting {wait} seconds and retrying...".format(**details))
@@ -109,6 +72,11 @@ class SFTPConnection():
             self.transport.close()
             self.__active_connection = False
 
+    def match_files_for_table(self, files, table_name, search_pattern):
+        LOGGER.info("Searching for files for table '%s', matching pattern: %s", table_name, table_pattern)
+        matcher = re.compile(search_pattern)
+        return [f for f in files if matcher.search(f["filepath"])]
+
     def get_files_by_prefix(self, prefix):
         """
         Accesses the underlying file system and gets all files that match "prefix", in this case, a directory path.
@@ -135,20 +103,24 @@ class SFTPConnection():
 
         return files
 
-    def get_exported_tables(self, prefix):
+    def get_files(self, prefix, search_pattern):
         files = self.get_files_by_prefix(prefix)
-
         if files:
-            LOGGER.info("Found %s files.", len(files))
+            LOGGER.info("Found %s files in %s.", len(files), prefix)
         else:
             LOGGER.warning('Found no files on specified SFTP server at "%s".', prefix)
 
-        filenames = [o["filepath"].split('/')[-1] for o in files]
-        return self.regex.match_available_tables(filenames)
+        matching_files = self.get_files_matching_pattern(files, search_pattern)
+        if matching_files:
+            LOGGER.info("Found %s files in %s matching %s", len(files), prefix, search_pattern)
+        else:
+            LOGGER.warning('Found no files on specified SFTP server at "%s" matching %s', prefix, search_pattern)
+
+        return matching_files
 
     def get_files_for_table(self, prefix, table_name, modified_since=None):
         files = self.get_files_by_prefix(prefix)
-        to_return = self.regex.match_files_for_table(files, table_name)
+        to_return = self.match_files_for_table(files, table_name)
         if modified_since is not None:
             to_return = [f for f in to_return if f["last_modified"] > modified_since]
 

@@ -6,11 +6,22 @@ def discover_streams(config):
     streams = []
 
     conn = client.connection(config)
-    exported_tables = conn.get_exported_tables(config.get("user_dir", "~/"))
+    prefix = format(config.get("user_dir", "./"))
 
-    for exported_table in exported_tables:
-        schema = sampling.get_sampled_schema_for_table(conn, config["path"], exported_table)
-        streams.append({'stream': exported_table, 'tap_stream_id': exported_table, 'schema': schema, 'metadata': load_metadata(schema)})
+    for table_spec in config['tables']:
+        files = conn.get_files(table_spec['search_prefix'], table_spec['search_pattern'])
+        import ipdb; ipdb.set_trace()
+        1+1
+        Schema = sampling.get_sampled_schema_for_table(conn, config["path"], exported_table)
+        streams.append(
+            {
+                'stream': table_spec['table_name'],
+                'tap_stream_id': table_spec['table_name'],
+                'schema': schema,
+                'metadata': load_metadata(table_spec, schema)
+            }
+        )
+
     return streams
 
 
