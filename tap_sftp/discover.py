@@ -9,10 +9,7 @@ def discover_streams(config):
     prefix = format(config.get("user_dir", "./"))
 
     for table_spec in config['tables']:
-        files = conn.get_files(table_spec['search_prefix'], table_spec['search_pattern'])
-        import ipdb; ipdb.set_trace()
-        1+1
-        Schema = sampling.get_sampled_schema_for_table(conn, config["path"], exported_table)
+        schema = sampling.get_sampled_schema_for_table(conn, config["path"], exported_table)
         streams.append(
             {
                 'stream': table_spec['table_name'],

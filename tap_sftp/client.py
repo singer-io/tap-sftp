@@ -90,10 +90,12 @@ class SFTPConnection():
             raise Exception("Directory '{}' does not exist".format(prefix)) from e
 
         is_empty = lambda a: a.st_size == 0
-        is_file = lambda a: stat.S_ISREG(a.st_mode)
+        is_directory = lambda a: stat.S_ISDIR(a.st_mode)
         for file_attr in result:
             # NB: This only looks at the immediate level beneath the prefix directory
-            if is_file(file_attr):
+            if is_directory(file_attr):
+                files += self.get_files_by_prefix(prefix + '/' + file_attr.filename)
+            else:
                 if is_empty(file_attr):
                     continue
                 # NB: SFTP specifies path characters to be '/'
@@ -106,16 +108,18 @@ class SFTPConnection():
     def get_files(self, prefix, search_pattern):
         files = self.get_files_by_prefix(prefix)
         if files:
-            LOGGER.info("Found %s files in %s.", len(files), prefix)
+            LOGGER.info('Found %s files in "%s"', len(files), prefix)
         else:
-            LOGGER.warning('Found no files on specified SFTP server at "%s".', prefix)
+            LOGGER.warning('Found no files on specified SFTP server at "%s"', prefix)
 
         matching_files = self.get_files_matching_pattern(files, search_pattern)
         if matching_files:
-            LOGGER.info("Found %s files in %s matching %s", len(files), prefix, search_pattern)
+            LOGGER.info('Found %s files in "%s" matching "%s"', len(matching_files), prefix, search_pattern)
         else:
-            LOGGER.warning('Found no files on specified SFTP server at "%s" matching %s', prefix, search_pattern)
+            LOGGER.warning('Found no files on specified SFTP server at "%s" matching "%s"', prefix, search_pattern)
 
+        import ipdb; ipdb.set_trace()
+        1+1
         return matching_files
 
     def get_files_for_table(self, prefix, table_name, modified_since=None):
