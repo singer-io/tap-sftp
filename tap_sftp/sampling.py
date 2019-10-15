@@ -7,10 +7,10 @@ LOGGER = singer.get_logger()
 SDC_SOURCE_FILE_COLUMN = "_sdc_source_file"
 SDC_SOURCE_LINENO_COLUMN = "_sdc_source_lineno"
 
-def get_sampled_schema_for_table(conn, prefix, table_name):
+def get_sampled_schema_for_table(conn, prefix, search_pattern, table_name):
     LOGGER.info('Sampling records to determine table schema "%s".', table_name)
 
-    files = conn.get_files_for_table(prefix, table_name)
+    files = conn.get_files(prefix, search_pattern)
 
     if not files:
         return {}
@@ -41,12 +41,11 @@ def sample_file(conn, table_name, f, sample_rate, max_records):
 
     file_handle = conn.get_file_handle(f)
 
-    raw_stream = client.RawStream(file_handle)
-    iterator = csv.get_row_iterator(raw_stream)
-
     current_row = 0
 
-    for row in iterator:
+    import ipdb; ipdb.set_trace()
+    1+1
+    for row in file_handle:
         if (current_row % sample_rate) == 0:
             if row.get(csv.SDC_EXTRA_COLUMN):
                 row.pop(csv.SDC_EXTRA_COLUMN)
@@ -75,7 +74,9 @@ def sample_files(conn, table_name, files,
 
     files_so_far = 0
 
-    for f in files:
+    sorted_files = sorted(files, key=lambda f: f['last_modified'], reverse=True)
+
+    for f in sorted_files:
         empty_file, samples = sample_file(conn, table_name, f,
                                           sample_rate, max_records)
 

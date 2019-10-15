@@ -7,7 +7,6 @@ import re
 import singer
 import stat
 import time
-from io import RawIOBase
 from datetime import datetime
 from paramiko.ssh_exception import AuthenticationException
 
@@ -118,8 +117,6 @@ class SFTPConnection():
         else:
             LOGGER.warning('Found no files on specified SFTP server at "%s" matching "%s"', prefix, search_pattern)
 
-        import ipdb; ipdb.set_trace()
-        1+1
         return matching_files
 
     def get_files_for_table(self, prefix, table_name, modified_since=None):
@@ -132,28 +129,9 @@ class SFTPConnection():
 
     def get_file_handle(self, f):
         """ Takes a file dict {"filepath": "...", "last_modified": "..."} and returns a handle to the file. """
-        is_ready = True # False
-        sleep_time = 1 # Start at 1 second, exponentially backoff
-        filepath = f["filepath"]
-        ready_files = [self.regex.replace_file_extension(filepath),
-                       filepath + '.ready'] # Check for all possibilities of ready files.
-
-        while not is_ready:
-            for possible_file in ready_files:
-                try:
-                    self.sftp.stat(possible_file)
-                    is_ready = True
-                except IOError:
-                    pass
-
-            if not is_ready:
-                LOGGER.info("No ready file found for %s, sleeping for %s seconds...", filepath, sleep_time)
-                time.sleep(sleep_time)
-                sleep_time *= 2
-
         # Read the whole file here and return a BytesIO object
         # NB: If CSV files become too large, read these to disk in a tmp dir and clean them up when finished
-        return io.BytesIO(self.sftp.open(filepath, 'r').read())
+        return self.sftp.open(f["filepath"], 'r')
 
     def get_files_matching_pattern(self, files, pattern):
         """ Takes a file dict {"filepath": "...", "last_modified": "..."} and a regex pattern string, and returns files matching that pattern. """
