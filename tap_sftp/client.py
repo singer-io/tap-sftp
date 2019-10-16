@@ -33,7 +33,13 @@ class SFTPConnection():
                           jitter=None,
                           factor=2)
     def __try_connect(self):
-        self.transport.connect(**self.creds)
+        try:
+            self.transport.connect(username = self.username, password = None, hostkey = None, pkey = self.key)
+        except paramiko.ssh_exception.AuthenticationException as ex:
+            self.transport.close()
+            self.transport = paramiko.Transport((self.host, self.port))
+            self.transport.use_compression(True)
+            self.transport.connect(username= self.username, password = self.password, hostkey = None, pkey = None)
 
     def __ensure_connection(self):
         if not self.__active_connection:
@@ -42,7 +48,7 @@ class SFTPConnection():
             self.key = None
             key_path = os.path.expanduser(self.private_key_file)
             self.key = paramiko.RSAKey.from_private_key_file(key_path)
-            self.creds = {'username': self.username, 'password': None,
+            self.creds = {'username': self.username, 'password': self.password,
                           'hostkey': None, 'pkey': self.key}
 
             try:

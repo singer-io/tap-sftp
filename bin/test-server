@@ -9,7 +9,7 @@ from argparse import RawTextHelpFormatter
 image_name = "atmoz/sftp"
 image_tag = "debian"
 
-def start_container(name):
+def start_container(name, key_auth=True):
     user = os.getenv('TAP_SFTP_USERNAME')
     password = os.getenv('TAP_SFTP_PASSWORD')
     upload_dir = os.getenv('TAP_SFTP_ROOT_DIR')
@@ -24,7 +24,8 @@ def start_container(name):
         sys.exit("Exited with code: {}, the docker process failed to start.".format(proc.returncode))
     print("Process started successfully.")
 
-    configure_container(name)
+    if key_auth:
+        configure_container(name)
     populate_container(name)
 
 def configure_container(name):
@@ -53,6 +54,7 @@ def populate_container(name):
     container_id = get_container_id(name)
     user = os.getenv('TAP_SFTP_USERNAME')
     upload_dir = os.getenv('TAP_SFTP_ROOT_DIR')
+
     # Copy authorized_keys and test csv files onto the docker image
     COPY_COMMAND = """
     docker cp ./bin/test_data.csv {}:/home/{}/{}/
@@ -95,12 +97,13 @@ Uses environment variables:
 parser = argparse.ArgumentParser(description=DESCRIPTION, formatter_class=RawTextHelpFormatter)
 parser.add_argument('action', choices=['start','stop', 'connect'], help='action to perform with the container')
 parser.add_argument('--name', help="name assigned to running docker process", default='sftp1')
+parser.add_argument('-p', action='store_false')
 
 def main():
     parsed_args = parser.parse_args()
     # Potential arguments to add: pull, changing docker cointainer, changing password
     if parsed_args.action == 'start':
-        start_container(parsed_args.name)
+        start_container(parsed_args.name, parsed_args.p)
     elif parsed_args.action == 'stop':
         stop_container(parsed_args.name)
     elif parsed_args.action == 'connect':
