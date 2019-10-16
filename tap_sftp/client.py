@@ -129,8 +129,6 @@ class SFTPConnection():
 
     def get_file_handle(self, f):
         """ Takes a file dict {"filepath": "...", "last_modified": "..."} and returns a handle to the file. """
-        # Read the whole file here and return a BytesIO object
-        # NB: If CSV files become too large, read these to disk in a tmp dir and clean them up when finished
         return self.sftp.open(f["filepath"], 'r')
 
     def get_files_matching_pattern(self, files, pattern):
