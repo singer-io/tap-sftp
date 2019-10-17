@@ -49,13 +49,6 @@ def sample_file(conn, table_spec, f, sample_rate, max_records):
             raise Exception('CSV file missing required headers: {}, file only contains headers for fields: {}'
                             .format(key_properties - headers, headers))
 
-    # Check for date overrides
-    if table_spec.get('date_overrides'):
-        date_overrides = set(table_spec['date_overrides'])
-        if not date_overrides.issubset(headers):
-            raise Exception('CSV file missing date_overrides headers: {}, file only contains headers for fields: {}'
-                            .format(date_overrides - headers, headers))
-
     current_row = 0
     for row in reader:
         if (current_row % sample_rate) == 0:
