@@ -30,6 +30,7 @@ def load_metadata(table_spec, schema):
 
     key_properties = [sampling.SDC_SOURCE_FILE_COLUMN, sampling.SDC_SOURCE_LINENO_COLUMN]
     mdata = metadata.write(mdata, (), 'table-key-properties', table_spec.get('key_properties', []))
+    mdata = metadata.write(mdata, (), 'forced-replication-method', 'INCREMENTAL')
 
     # Make all fields automatic
     for field_name in schema.get('properties', {}).keys():
