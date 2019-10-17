@@ -1,0 +1,127 @@
+#!/usr/bin/env python3
+import os
+import sys
+import argparse
+import subprocess
+import time
+from argparse import RawTextHelpFormatter
+
+image_name = "atmoz/sftp"
+image_tag = "debian"
+
+def start_container(name, key_auth=True):
+    user = os.getenv('TAP_SFTP_USERNAME')
+    password = os.getenv('TAP_SFTP_PASSWORD')
+    port = os.getenv('TAP_SFTP_PORT')
+    root_dir = os.getenv('TAP_SFTP_ROOT_DIR')
+
+    START_COMMAND = """
+    sudo docker run -p {0}:22 --name {1} -d {2}:{3} {4}:{5}:::{6}
+    """.format(port, name, image_name, image_tag, user, password, root_dir)
+    print("Starting Docker process sftp using command: {}".format(START_COMMAND))
+
+    proc = subprocess.run(START_COMMAND, shell=True)
+    if proc.returncode != 0:
+        sys.exit("Exited with code: {}, the docker process failed to start.".format(proc.returncode))
+    print("Process started successfully.")
+
+    if key_auth:
+        configure_container(name)
+    make_writable(name)
+    #populate_container(name)
+
+def configure_container(name):
+    user = os.getenv('TAP_SFTP_USERNAME')
+    container_id = get_container_id(name)
+
+    # Make the .ssh folder
+    CONFIGURE_COMMAND = """
+    docker exec {} mkdir /home/{}/.ssh
+    """.format(container_id, user)
+    print(CONFIGURE_COMMAND)
+    proc = subprocess.run(CONFIGURE_COMMAND, shell=True)
+
+    # Copy authorized_keys
+    CONFIGURE_COMMAND = """
+    docker cp ~/.ssh/id_rsa.pub {}:/home/{}/.ssh/authorized_keys
+    """.format(container_id, user)
+    print(CONFIGURE_COMMAND)
+    proc = subprocess.run(CONFIGURE_COMMAND, shell=True)
+
+    if proc.returncode != 0:
+        sys.exit("Exited with code: {}, the docker command failed.".format(proc.returncode))
+
+
+def make_writable(name):
+    container_id = get_container_id(name)
+    user = os.getenv('TAP_SFTP_USERNAME')
+    root_dir = os.getenv('TAP_SFTP_ROOT_DIR')
+
+    # Make the test user own their home directory
+    COMMAND = """
+    docker exec {0} chown {1}:users /home/{1}/{2}
+    """.format(name, user, root_dir)
+    print(COMMAND)
+    proc = subprocess.run(COMMAND, shell=True)
+
+def populate_container(name):
+    container_id = get_container_id(name)
+    user = os.getenv('TAP_SFTP_USERNAME')
+    upload_dir = os.getenv('TAP_SFTP_ROOT_DIR')
+
+    # Copy test csv files onto the docker image
+    COPY_COMMAND = """
+    docker cp ./bin/test_data.csv {}:/home/{}/{}/
+    """.format(container_id, user, upload_dir)
+    print(COPY_COMMAND)
+    proc = subprocess.run(COPY_COMMAND, shell=True)
+
+    if proc.returncode != 0:
+        sys.exit("Exited with code: {}, the docker command failed.".format(proc.returncode))
+
+def get_ip_addr(name):
+    IP_ADDR_COMMAND = "docker inspect {} | jq -r .[].NetworkSettings.IPAddress"
+    print("Retrieving IP addr of mongodb container")
+    ip_addr = subprocess.check_output(IP_ADDR_COMMAND.format(name), shell=True).decode('utf-8').rstrip()
+    print(ip_addr)
+    return ip_addr
+
+def get_container_id(name):
+    CONTAINER_ID_COMMAND = 'docker ps --filter "name=' + name + '" --format "{{.ID}}"'
+    container_id = subprocess.check_output(CONTAINER_ID_COMMAND, shell=True).decode('utf-8').rstrip()
+    print(container_id)
+    return container_id
+
+def stop_container(name):
+    STOP_COMMAND = "sudo docker stop {0} && sudo docker rm {0}"
+
+    print("Stopping Docker process {}".format(name))
+    proc = subprocess.run(STOP_COMMAND.format(name), shell=True)
+    if proc.returncode != 0:
+        sys.exit("Exited with code: {}, the docker process failed to stop.".format(proc.returncode))
+    print("Process stopped successfully")
+
+DESCRIPTION = """
+Manage docker instance for tap-sftp testing.
+
+Uses environment variables:
+    STITCH_TAP_SFTP_TEST_USERNAME
+    STITCH_TAP_SFTP_TEST_PASSWORD
+"""
+parser = argparse.ArgumentParser(description=DESCRIPTION, formatter_class=RawTextHelpFormatter)
+parser.add_argument('action', choices=['start','stop', 'connect'], help='action to perform with the container')
+parser.add_argument('--name', help="name assigned to running docker process", default='sftp1')
+parser.add_argument('-p', action='store_false', help='pass to not install ssh authorized_keys')
+
+def main():
+    parsed_args = parser.parse_args()
+    # Potential arguments to add: pull, changing docker cointainer, changing password
+    if parsed_args.action == 'start':
+        start_container(parsed_args.name, parsed_args.p)
+    elif parsed_args.action == 'stop':
+        stop_container(parsed_args.name)
+    elif parsed_args.action == 'connect':
+        connect_to_db(parsed_args.name)
+
+if __name__ == "__main__":
+    main()
