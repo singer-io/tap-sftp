@@ -18,8 +18,9 @@ class SFTPConnection():
         self.username = username
         self.password = password
         self.port = int(port)or 22
-        self.private_key_file = private_key_file
         self.__active_connection = False
+        key_path = os.path.expanduser(private_key_file)
+        self.key = paramiko.RSAKey.from_private_key_file(key_path)
 
     def handle_backoff(details):
         LOGGER.warn("SSH Connection closed unexpectedly. Waiting {wait} seconds and retrying...".format(**details))
@@ -34,8 +35,10 @@ class SFTPConnection():
                           factor=2)
     def __try_connect(self):
         try:
-            self.transport.connect(username = self.username, password = None, hostkey = None, pkey = self.key)
-        except paramiko.ssh_exception.AuthenticationException as ex:
+            self.transport = paramiko.Transport((self.host, self.port))
+            self.transport.use_compression(True)
+            self.transport.connect(username = self.username, password = self.password, hostkey = None, pkey = self.key)
+        except AuthenticationException as ex:
             self.transport.close()
             self.transport = paramiko.Transport((self.host, self.port))
             self.transport.use_compression(True)
@@ -43,18 +46,10 @@ class SFTPConnection():
 
     def __ensure_connection(self):
         if not self.__active_connection:
-            self.transport = paramiko.Transport((self.host, self.port))
-            self.transport.use_compression(True)
-            self.key = None
-            key_path = os.path.expanduser(self.private_key_file)
-            self.key = paramiko.RSAKey.from_private_key_file(key_path)
-            self.creds = {'username': self.username, 'password': self.password,
-                          'hostkey': None, 'pkey': self.key}
-
             try:
                 self.__try_connect()
             except AuthenticationException as ex:
-                raise Exception("Message from SFTP server: {} - Please ensure that the server is configured to accept the public key for this integration.".format(ex)) from ex
+                raise Exception("Message from SFTP server: {} - Please ensure that the credentials are valid.".format(ex)) from ex
             self.sftp = paramiko.SFTPClient.from_transport(self.transport)
             self.__active_connection = True
 
@@ -67,7 +62,15 @@ class SFTPConnection():
     def sftp(self, sftp):
         self.__sftp = sftp
 
+    def __enter__(self):
+        self.__try_connect()
+        return self
+
     def __del__(self):
+        """ Clean up the socket when this class gets garbage collected. """
+        self.close()
+
+    def __exit__(self):
         """ Clean up the socket when this class gets garbage collected. """
         self.close()
 
