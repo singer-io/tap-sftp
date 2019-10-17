@@ -9,7 +9,6 @@ def discover_streams(config):
     conn = client.connection(config)
     prefix = format(config.get("user_dir", "./"))
 
-
     tables = json.loads(config['tables'])
     for table_spec in tables:
         schema = sampling.get_sampled_schema_for_table(conn, table_spec)

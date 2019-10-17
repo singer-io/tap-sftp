@@ -24,7 +24,7 @@ def get_sampled_schema_for_table(conn, table_spec):
         SDC_EXTRA_COLUMN: {'type': 'array', 'items': {'type': 'string'}},
     }
 
-    data_schema = conversion.generate_schema(samples)
+    data_schema = conversion.generate_schema(samples, table_spec)
 
     return {
         'type': 'object',
