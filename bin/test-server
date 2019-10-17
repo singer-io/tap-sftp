@@ -12,11 +12,12 @@ image_tag = "debian"
 def start_container(name, key_auth=True):
     user = os.getenv('TAP_SFTP_USERNAME')
     password = os.getenv('TAP_SFTP_PASSWORD')
-    upload_dir = os.getenv('TAP_SFTP_ROOT_DIR')
+    port = os.getenv('TAP_SFTP_PORT')
+    root_dir = os.getenv('TAP_SFTP_ROOT_DIR')
 
     START_COMMAND = """
     sudo docker run -p {0}:22 --name {1} -d {2}:{3} {4}:{5}:::{6}
-    """.format(27019, name, image_name, image_tag, user, password, upload_dir)
+    """.format(port, name, image_name, image_tag, user, password, root_dir)
     print("Starting Docker process sftp using command: {}".format(START_COMMAND))
 
     proc = subprocess.run(START_COMMAND, shell=True)
@@ -26,7 +27,8 @@ def start_container(name, key_auth=True):
 
     if key_auth:
         configure_container(name)
-    populate_container(name)
+    make_writable(name)
+    #populate_container(name)
 
 def configure_container(name):
     user = os.getenv('TAP_SFTP_USERNAME')
@@ -50,12 +52,24 @@ def configure_container(name):
         sys.exit("Exited with code: {}, the docker command failed.".format(proc.returncode))
 
 
+def make_writable(name):
+    container_id = get_container_id(name)
+    user = os.getenv('TAP_SFTP_USERNAME')
+    root_dir = os.getenv('TAP_SFTP_ROOT_DIR')
+
+    # Make the test user own their home directory
+    COMMAND = """
+    docker exec {0} chown {1}:users /home/{1}/{2}
+    """.format(name, user, root_dir)
+    print(COMMAND)
+    proc = subprocess.run(COMMAND, shell=True)
+
 def populate_container(name):
     container_id = get_container_id(name)
     user = os.getenv('TAP_SFTP_USERNAME')
     upload_dir = os.getenv('TAP_SFTP_ROOT_DIR')
 
-    # Copy authorized_keys and test csv files onto the docker image
+    # Copy test csv files onto the docker image
     COPY_COMMAND = """
     docker cp ./bin/test_data.csv {}:/home/{}/{}/
     """.format(container_id, user, upload_dir)
@@ -97,7 +111,7 @@ Uses environment variables:
 parser = argparse.ArgumentParser(description=DESCRIPTION, formatter_class=RawTextHelpFormatter)
 parser.add_argument('action', choices=['start','stop', 'connect'], help='action to perform with the container')
 parser.add_argument('--name', help="name assigned to running docker process", default='sftp1')
-parser.add_argument('-p', action='store_false')
+parser.add_argument('-p', action='store_false', help='pass to not install ssh authorized_keys')
 
 def main():
     parsed_args = parser.parse_args()
