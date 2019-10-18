@@ -1,9 +1,9 @@
 import json
-import csv
 import singer
 from singer import metadata, utils, Transformer
 from tap_sftp import client
 from tap_sftp import sampling
+from singer_encodings import csv
 
 LOGGER = singer.get_logger()
 
@@ -16,17 +16,17 @@ def sync_stream(config, state, stream):
     LOGGER.info('Getting files modified since %s.', modified_since)
 
     conn = client.connection(config)
-    table_config = [c for c in json.loads(config["tables"]) if c["table_name"]==table_name]
-    if len(table_config) == 0:
+    table_spec = [c for c in json.loads(config["tables"]) if c["table_name"]==table_name]
+    if len(table_spec) == 0:
         LOGGER.info("No table configuration found for '%s', skipping stream", table_name)
         return 0
-    if len(table_config) > 1:
+    if len(table_spec) > 1:
         LOGGER.info("Multiple table configurations found for '%s', skipping stream", table_name)
         return 0
-    table_config = table_config[0]
+    table_spec = table_spec[0]
 
-    files = conn.get_files(table_config["search_prefix"],
-                           table_config["search_pattern"],
+    files = conn.get_files(table_spec["search_prefix"],
+                           table_spec["search_pattern"],
                            modified_since)
 
     LOGGER.info('Found %s files to be synced.', len(files))
@@ -36,7 +36,7 @@ def sync_stream(config, state, stream):
         return records_streamed
 
     for f in files:
-        records_streamed += sync_file(conn, f, stream, table_config.get('delimiter', ','))
+        records_streamed += sync_file(conn, f, stream, table_spec)
         state = singer.write_bookmark(state, table_name, 'modified_since', f['last_modified'].isoformat())
         singer.write_state(state)
 
@@ -44,14 +44,12 @@ def sync_stream(config, state, stream):
 
     return records_streamed
 
-def sync_file(conn, f, stream, delimiter=','):
+def sync_file(conn, f, stream, table_spec):
     LOGGER.info('Syncing file "%s".', f["filepath"])
 
     file_handle = conn.get_file_handle(f)
     # TODO Make sure this replace thing is a generator
-    reader = csv.DictReader((line.replace('\0', '') for line in file_handle),
-                            restkey=sampling.SDC_EXTRA_COLUMN,
-                            delimiter=delimiter)
+    reader = csv.get_row_iterator(file_handle, {'key_properties': table_spec['key_properties']})
 
     records_synced = 0
 
