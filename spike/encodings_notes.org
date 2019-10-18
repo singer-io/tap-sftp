@@ -1,0 +1,11 @@
+* sftp/s3-csv/responsys shared code
+** Sampling/Type inference
+ - generate_schema(samples, table_spec, try_parse_datetime)
+   - top level function (public) that would generate the schema given samples
+ - count_sample(sample, counts, date_overrides)
+ - infer(datum)
+   - called by count_sample()
+   - takes a piece of data (string) and infers the type
+   - tries to cast to an int, then a float if exceptions are caught, returns it as a string
+   - sftp and s3-csv do not try to parse it as a datetime using dateutil.parse(), but responsys does
+   - maybe try_parse_datetime should be an optional parameter
