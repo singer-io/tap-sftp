@@ -113,7 +113,7 @@ class SFTPConnection():
 
         return files
 
-    def get_files(self, prefix, search_pattern):
+    def get_files(self, prefix, search_pattern, modified_since=None):
         files = self.get_files_by_prefix(prefix)
         if files:
             LOGGER.info('Found %s files in "%s"', len(files), prefix)
@@ -121,24 +121,23 @@ class SFTPConnection():
             LOGGER.warning('Found no files on specified SFTP server at "%s"', prefix)
 
         matching_files = self.get_files_matching_pattern(files, search_pattern)
+
         if matching_files:
             LOGGER.info('Found %s files in "%s" matching "%s"', len(matching_files), prefix, search_pattern)
         else:
             LOGGER.warning('Found no files on specified SFTP server at "%s" matching "%s"', prefix, search_pattern)
 
-        return matching_files
+        for f in matching_files:
+            LOGGER.info("Found file: %s", f['filepath'])
 
-    def get_files_for_table(self, prefix, table_name, modified_since=None):
-        files = self.get_files_by_prefix(prefix)
-        to_return = self.match_files_for_table(files, table_name)
         if modified_since is not None:
-            to_return = [f for f in to_return if f["last_modified"] > modified_since]
+            matching_files = [f for f in matching_files if f["last_modified"] > modified_since]
 
-        return to_return
+        return matching_files
 
     def get_file_handle(self, f):
         """ Takes a file dict {"filepath": "...", "last_modified": "..."} and returns a handle to the file. """
-        return self.sftp.open(f["filepath"], 'r')
+        return self.sftp.open(f["filepath"], 'rb')
 
     def get_files_matching_pattern(self, files, pattern):
         """ Takes a file dict {"filepath": "...", "last_modified": "..."} and a regex pattern string, and returns files matching that pattern. """

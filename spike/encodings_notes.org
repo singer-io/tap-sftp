@@ -1,0 +1,6 @@
+* sftp/s3-csv/responsys shared code
+** Sampling/Type inference
+ - generate_schema(samples, table_spec, try_parse_datetime)
+   - top level function (public) that would generate the schema given samples
+ - The whole sampling.py file can be moved to singer-encodings
+ - Same with conversion.py

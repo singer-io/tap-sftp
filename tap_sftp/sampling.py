@@ -1,12 +1,11 @@
-import csv
 import singer
 from tap_sftp import client, conversion
+from singer_encodings import csv
 
 LOGGER = singer.get_logger()
 
 SDC_SOURCE_FILE_COLUMN = "_sdc_source_file"
 SDC_SOURCE_LINENO_COLUMN = "_sdc_source_lineno"
-SDC_EXTRA_COLUMN = "_sdc_extra"
 
 def get_sampled_schema_for_table(conn, table_spec):
     LOGGER.info('Sampling records to determine table schema "%s".', table_spec['table_name'])
@@ -21,10 +20,10 @@ def get_sampled_schema_for_table(conn, table_spec):
     metadata_schema = {
         SDC_SOURCE_FILE_COLUMN: {'type': 'string'},
         SDC_SOURCE_LINENO_COLUMN: {'type': 'integer'},
-        SDC_EXTRA_COLUMN: {'type': 'array', 'items': {'type': 'string'}},
+        csv.SDC_EXTRA_COLUMN: {'type': 'array', 'items': {'type': 'string'}},
     }
 
-    data_schema = conversion.generate_schema(samples)
+    data_schema = conversion.generate_schema(samples, table_spec)
 
     return {
         'type': 'object',
@@ -39,28 +38,13 @@ def sample_file(conn, table_spec, f, sample_rate, max_records):
     samples = []
 
     file_handle = conn.get_file_handle(f)
-    reader = csv.DictReader((line.replace('\0', '') for line in file_handle), restkey=SDC_EXTRA_COLUMN, delimiter=table_spec.get('delimiter', ','))
-
-    # Check for the key_properties
-    headers = set(reader.fieldnames)
-    if table_spec.get('key_properties'):
-        key_properties = set(table_spec['key_properties'])
-        if not key_properties.issubset(headers):
-            raise Exception('CSV file missing required headers: {}, file only contains headers for fields: {}'
-                            .format(key_properties - headers, headers))
-
-    # Check for date overrides
-    if table_spec.get('date_overrides'):
-        date_overrides = set(table_spec['date_overrides'])
-        if not date_overrides.issubset(headers):
-            raise Exception('CSV file missing date_overrides headers: {}, file only contains headers for fields: {}'
-                            .format(date_overrides - headers, headers))
+    reader = csv.get_row_iterator(file_handle, {'key_properties': table_spec['key_properties']})
 
     current_row = 0
     for row in reader:
         if (current_row % sample_rate) == 0:
-            if row.get(SDC_EXTRA_COLUMN):
-                row.pop(SDC_EXTRA_COLUMN)
+            if row.get(csv.SDC_EXTRA_COLUMN):
+                row.pop(csv.SDC_EXTRA_COLUMN)
             samples.append(row)
 
         current_row += 1

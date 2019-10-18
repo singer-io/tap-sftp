@@ -24,21 +24,19 @@ def infer(datum):
     except (ValueError, TypeError):
         pass
 
-    try:
-        dateutil.parser.parse(datum)
-        return 'date-time'
-    except (ValueError, TypeError):
-        pass
-
     return 'string'
 
 
-def count_sample(sample, counts):
+def count_sample(sample, counts, table_spec):
     for key, value in sample.items():
         if key not in counts:
             counts[key] = {}
 
-        datatype = infer(value)
+        date_overrides = table_spec.get('date_overrides', [])
+        if key in date_overrides:
+            datatype = "date-time"
+        else:
+            datatype = infer(value)
 
         if datatype is not None:
             counts[key][datatype] = counts[key].get(datatype, 0) + 1
@@ -75,11 +73,11 @@ def pick_datatype(counts):
     return to_return
 
 
-def generate_schema(samples):
+def generate_schema(samples, table_spec):
     counts = {}
     for sample in samples:
         # {'name' : { 'string' : 45}}
-        counts = count_sample(sample, counts)
+        counts = count_sample(sample, counts, table_spec)
 
     for key, value in counts.items():
         datatype = pick_datatype(value)

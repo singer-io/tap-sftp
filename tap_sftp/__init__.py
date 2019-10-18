@@ -49,7 +49,7 @@ def main():
 
     if args.discover:
         do_discover(args.config)
-    elif args.properties:
+    elif args.catalog or args.properties:
         do_sync(args.config, args.catalog, args.state)
 
 if __name__ == '__main__':
