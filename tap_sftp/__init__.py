@@ -62,7 +62,7 @@ def do_sync(config, catalog, state):
                             file_data['last_modified']])
 
     data = headers + rows
-    table = AsciiTable(data, title='Sync Summary')
+    table = AsciiTable(data, title='Extraction Summary')
     LOGGER.info("\n\n%s", table.table)
 
 
