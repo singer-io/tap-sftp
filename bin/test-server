@@ -81,7 +81,7 @@ def populate_container(name):
 
 def get_ip_addr(name):
     IP_ADDR_COMMAND = "docker inspect {} | jq -r .[].NetworkSettings.IPAddress"
-    print("Retrieving IP addr of mongodb container")
+    print("Retrieving IP addr of sftp container")
     ip_addr = subprocess.check_output(IP_ADDR_COMMAND.format(name), shell=True).decode('utf-8').rstrip()
     print(ip_addr)
     return ip_addr

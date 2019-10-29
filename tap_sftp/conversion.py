@@ -1,8 +1,4 @@
 import re
-import singer
-import dateutil.parser
-
-LOGGER = singer.get_logger()
 
 def infer(datum):
     """
@@ -26,7 +22,6 @@ def infer(datum):
 
     return 'string'
 
-
 def count_sample(sample, counts, table_spec):
     for key, value in sample.items():
         if key not in counts:
@@ -42,7 +37,6 @@ def count_sample(sample, counts, table_spec):
             counts[key][datatype] = counts[key].get(datatype, 0) + 1
 
     return counts
-
 
 def pick_datatype(counts):
     """
@@ -71,7 +65,6 @@ def pick_datatype(counts):
         to_return = 'number'
 
     return to_return
-
 
 def generate_schema(samples, table_spec):
     counts = {}
