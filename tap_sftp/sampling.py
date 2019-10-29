@@ -1,6 +1,6 @@
 import singer
-from tap_sftp import client, conversion
 from singer_encodings import csv
+from tap_sftp import client, conversion
 
 LOGGER = singer.get_logger()
 

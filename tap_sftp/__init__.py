@@ -55,11 +55,11 @@ def do_sync(config, catalog, state):
     for table_name, table_data in STATS.items():
         for filepath, file_data in table_data['files'].items():
             rows.append([table_name,
-                            table_data['search_prefix'],
-                            table_data['search_pattern'],
-                            filepath,
-                            file_data['row_count'],
-                            file_data['last_modified']])
+                         table_data['search_prefix'],
+                         table_data['search_pattern'],
+                         filepath,
+                         file_data['row_count'],
+                         file_data['last_modified']])
 
     data = headers + rows
     table = AsciiTable(data, title='Extraction Summary')
