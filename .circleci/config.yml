@@ -29,8 +29,7 @@ jobs:
             run-a-test --tap=tap-sftp \
                        --target=target-stitch \
                        --orchestrator=stitch-orchestrator \
-                       --email=harrison+sandboxtest@stitchdata.com \
-                       --password=$SANDBOX_PASSWORD \
+                       --token="$DEV_TOKEN" \
                        --client-id=50 \
                        tap_tester.suites.sftp
 
