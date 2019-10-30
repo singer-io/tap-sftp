@@ -92,6 +92,10 @@ class SFTPConnection():
         Returns a list of filepaths from the root.
         """
         files = []
+
+        if prefix is None or prefix == '':
+            prefix = '.'
+
         try:
             result = self.sftp.listdir_attr(prefix)
         except FileNotFoundError as e:
