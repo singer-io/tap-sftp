@@ -36,9 +36,15 @@ def sample_file(conn, table_spec, f, sample_rate, max_records):
     LOGGER.info('Sampling %s (%s records, every %s record%s).', f['filepath'], max_records, sample_rate, plurality)
 
     samples = []
-
     file_handle = conn.get_file_handle(f)
-    reader = csv.get_row_iterator(file_handle, {'key_properties': table_spec['key_properties']})
+
+    # Add file_name to opts and flag infer_compression to support gzipped files
+    opts = {'key_properties': table_spec['key_properties'],
+            'file_name': f['filepath']}
+    readers = csv.get_row_iterators(file_handle, options=opts, infer_compression=True)
+
+    # TODO: singer_encodings only supports yielding a single reader at the moment
+    reader = next(readers)
 
     current_row = 0
     for row in reader:

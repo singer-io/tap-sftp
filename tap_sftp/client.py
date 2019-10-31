@@ -19,8 +19,10 @@ class SFTPConnection():
         self.password = password
         self.port = int(port)or 22
         self.__active_connection = False
-        key_path = os.path.expanduser(private_key_file)
-        self.key = paramiko.RSAKey.from_private_key_file(key_path)
+        self.key = None
+        if private_key_file:
+            key_path = os.path.expanduser(private_key_file)
+            self.key = paramiko.RSAKey.from_private_key_file(key_path)
 
     def handle_backoff(details):
         LOGGER.warn("SSH Connection closed unexpectedly. Waiting {wait} seconds and retrying...".format(**details))
