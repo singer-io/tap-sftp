@@ -49,8 +49,14 @@ def sync_file(conn, f, stream, table_spec):
     LOGGER.info('Syncing file "%s".', f["filepath"])
 
     file_handle = conn.get_file_handle(f)
-    # TODO Make sure this replace thing is a generator
-    reader = csv.get_row_iterator(file_handle, {'key_properties': table_spec['key_properties']})
+
+    # Add file_name to opts and flag infer_compression to support gzipped files
+    opts = {'key_properties': table_spec['key_properties'],
+            'file_name': f['filepath']}
+    readers = csv.get_row_iterators(file_handle, options=opts, infer_compression=True)
+
+    # TODO: singer_encodings only supports yielding a single reader at the moment
+    reader = next(readers)
 
     records_synced = 0
 
