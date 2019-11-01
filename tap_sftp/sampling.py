@@ -38,25 +38,27 @@ def sample_file(conn, table_spec, f, sample_rate, max_records):
     samples = []
     file_handle = conn.get_file_handle(f)
 
+
     # Add file_name to opts and flag infer_compression to support gzipped files
+
+
     opts = {'key_properties': table_spec['key_properties'],
             'file_name': f['filepath']}
+
     readers = csv.get_row_iterators(file_handle, options=opts, infer_compression=True)
 
-    # TODO: singer_encodings only supports yielding a single reader at the moment
-    reader = next(readers)
+    for reader in readers:
+        current_row = 0
+        for row in reader:
+            if (current_row % sample_rate) == 0:
+                if row.get(csv.SDC_EXTRA_COLUMN):
+                    row.pop(csv.SDC_EXTRA_COLUMN)
+                samples.append(row)
 
-    current_row = 0
-    for row in reader:
-        if (current_row % sample_rate) == 0:
-            if row.get(csv.SDC_EXTRA_COLUMN):
-                row.pop(csv.SDC_EXTRA_COLUMN)
-            samples.append(row)
+            current_row += 1
 
-        current_row += 1
-
-        if len(samples) >= max_records:
-            break
+            if len(samples) >= max_records:
+                break
 
     LOGGER.info('Sampled %s records.', len(samples))
 
