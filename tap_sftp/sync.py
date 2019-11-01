@@ -53,27 +53,26 @@ def sync_file(conn, f, stream, table_spec):
     # Add file_name to opts and flag infer_compression to support gzipped files
     opts = {'key_properties': table_spec['key_properties'],
             'file_name': f['filepath']}
-    readers = csv.get_row_iterators(file_handle, options=opts, infer_compression=True)
 
-    # TODO: singer_encodings only supports yielding a single reader at the moment
-    reader = next(readers)
+    readers = csv.get_row_iterators(file_handle, options=opts, infer_compression=True)
 
     records_synced = 0
 
-    with Transformer() as transformer:
-        for row in reader:
-            custom_columns = {
-                '_sdc_source_file': f["filepath"],
+    for reader in readers:
+        with Transformer() as transformer:
+            for row in reader:
+                custom_columns = {
+                    '_sdc_source_file': f["filepath"],
 
-                # index zero, +1 for header row
-                '_sdc_source_lineno': records_synced + 2
-            }
-            rec = {**row, **custom_columns}
+                    # index zero, +1 for header row
+                    '_sdc_source_lineno': records_synced + 2
+                }
+                rec = {**row, **custom_columns}
 
-            to_write = transformer.transform(rec, stream.schema.to_dict(), metadata.to_map(stream.metadata))
+                to_write = transformer.transform(rec, stream.schema.to_dict(), metadata.to_map(stream.metadata))
 
-            singer.write_record(stream.tap_stream_id, to_write)
-            records_synced += 1
+                singer.write_record(stream.tap_stream_id, to_write)
+                records_synced += 1
 
     stats.add_file_data(table_spec, f['filepath'], f['last_modified'], records_synced)
 
