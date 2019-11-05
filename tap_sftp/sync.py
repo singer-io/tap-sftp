@@ -2,7 +2,6 @@ import json
 import singer
 from singer import metadata, utils, Transformer
 from tap_sftp import client
-from tap_sftp import sampling
 from tap_sftp import stats
 from singer_encodings import csv
 
