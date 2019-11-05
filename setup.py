@@ -13,7 +13,7 @@ setup(
         "singer-python==5.9.0",
         'paramiko==2.6.0',
         'backoff==1.8.0',
-        'singer-encodings==0.0.6',
+        'singer-encodings==0.0.7',
         'terminaltables==3.1.0',
     ],
     extras_require={
