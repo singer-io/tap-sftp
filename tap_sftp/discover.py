@@ -4,7 +4,6 @@ import singer
 from singer_encodings import json_schema
 from singer import metadata
 from tap_sftp import client
-from tap_sftp import sampling
 
 LOGGER= singer.get_logger()
 
