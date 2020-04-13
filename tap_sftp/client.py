@@ -52,7 +52,7 @@ class SFTPConnection():
 
     @property
     def sftp(self):
-        self.__try_connection()
+        self.__try_connect()
         return self.__sftp
 
     @sftp.setter
