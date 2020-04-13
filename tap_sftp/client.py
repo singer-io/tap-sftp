@@ -8,7 +8,7 @@ import singer
 import stat
 import time
 from datetime import datetime
-from paramiko.ssh_exception import AuthenticationException
+from paramiko.ssh_exception import AuthenticationException, SSHException
 
 LOGGER = singer.get_logger()
 
@@ -40,19 +40,20 @@ class SFTPConnection():
             self.transport = paramiko.Transport((self.host, self.port))
             self.transport.use_compression(True)
             self.transport.connect(username = self.username, password = self.password, hostkey = None, pkey = self.key)
-        except AuthenticationException as ex:
+            self.sftp = paramiko.SFTPClient.from_transport(self.transport)
+        except (AuthenticationException, SSHException) as ex:
             self.transport.close()
             self.transport = paramiko.Transport((self.host, self.port))
             self.transport.use_compression(True)
             self.transport.connect(username= self.username, password = self.password, hostkey = None, pkey = None)
+            self.sftp = paramiko.SFTPClient.from_transport(self.transport)
 
     def __ensure_connection(self):
         if not self.__active_connection:
             try:
                 self.__try_connect()
-            except AuthenticationException as ex:
+            except (AuthenticationException, SSHException) as ex:
                 raise Exception("Message from SFTP server: {} - Please ensure that the credentials are valid.".format(ex)) from ex
-            self.sftp = paramiko.SFTPClient.from_transport(self.transport)
             self.__active_connection = True
 
     @property
