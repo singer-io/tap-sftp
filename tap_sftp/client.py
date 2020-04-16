@@ -107,10 +107,17 @@ class SFTPConnection():
             else:
                 if is_empty(file_attr):
                     continue
+
+                last_modified = file_attr.st_mtime
+                if last_modified is None:
+                    LOGGER.warning("Cannot read m_time for file %s, defaulting to current epoch time",
+                                   os.path.join(prefix, file_attr.filename))
+                    last_modified = datetime.utcnow().timestamp()
+
                 # NB: SFTP specifies path characters to be '/'
                 #     https://tools.ietf.org/html/draft-ietf-secsh-filexfer-13#section-6
                 files.append({"filepath": prefix + '/' + file_attr.filename,
-                              "last_modified": datetime.utcfromtimestamp(file_attr.st_mtime).replace(tzinfo=pytz.UTC)})
+                              "last_modified": datetime.utcfromtimestamp(last_modified).replace(tzinfo=pytz.UTC)})
 
         return files
 
