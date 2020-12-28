@@ -26,7 +26,6 @@ jobs:
             aws s3 cp s3://com-stitchdata-dev-deployment-assets/environments/tap-tester/sandbox dev_env.sh
             source dev_env.sh
             source /usr/local/share/virtualenvs/tap-tester/bin/activate
-            ls tests
             run-test --tap=tap-sftp \
                      --target=target-stitch \
                      --orchestrator=stitch-orchestrator \
@@ -34,13 +33,6 @@ jobs:
                      --password=$SANDBOX_PASSWORD \
                      --client-id=50 \
                      tests
-
-            # run-a-test --tap=tap-sftp \
-            #            --target=target-stitch \
-            #            --orchestrator=stitch-orchestrator \
-            #            --token="$DEV_TOKEN" \
-            #            --client-id=50 \
-            #            tap_tester.suites.sftp
 
 workflows:
   version: 2

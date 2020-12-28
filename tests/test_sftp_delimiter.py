@@ -15,12 +15,10 @@ from functools import reduce
 import decimal
 from singer import utils, metadata
 
-
 import tap_tester.connections as connections
 import tap_tester.menagerie   as menagerie
 import tap_tester.runner      as runner
 
-from base import SFTPBaseTest
 
 RECORD_COUNT = {}
 
@@ -52,7 +50,7 @@ def generate_simple_csv_lines_typeB(num_lines):
         lines.append([int_value, random_string_generator(), utils.strftime(start_datetime), int_value + random.random()])
     return lines
 
-class SftpDelimiter(SFTPBaseTest):
+class SftpDelimiter(unittest.TestCase):
     def isdir(path, client):
         try:
             return S_ISDIR(client.stat(path).st_mode)
