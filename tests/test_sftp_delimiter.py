@@ -20,6 +20,7 @@ import tap_tester.connections as connections
 import tap_tester.menagerie   as menagerie
 import tap_tester.runner      as runner
 
+from base import SFTPBaseTest
 
 RECORD_COUNT = {}
 
@@ -51,7 +52,7 @@ def generate_simple_csv_lines_typeB(num_lines):
         lines.append([int_value, random_string_generator(), utils.strftime(start_datetime), int_value + random.random()])
     return lines
 
-class SftpDelimiter(unittest.TestCase):
+class SftpDelimiter(SFTPBaseTest):
     def isdir(path, client):
         try:
             return S_ISDIR(client.stat(path).st_mode)
@@ -97,48 +98,6 @@ class SftpDelimiter(unittest.TestCase):
                 "generator": generate_simple_csv_lines_typeA
             },
         ]
-
-    def setUp(self):
-        if not all([x for x in [os.getenv('TAP_SFTP_USERNAME'),
-                                os.getenv('TAP_SFTP_PASSWORD'),
-                                os.getenv('TAP_SFTP_ROOT_DIR')]]):
-            #pylint: disable=line-too-long
-            raise Exception("set TAP_SFTP_USERNAME, TAP_SFTP_PASSWORD, TAP_SFTP_ROOT_DIR")
-
-        root_dir = os.getenv('TAP_SFTP_ROOT_DIR')
-
-        with get_test_connection() as client:
-            # drop all csv files in root dir
-            client.chdir(root_dir)
-            try:
-                SftpDelimiter.rm('tap_tester', client)
-            except FileNotFoundError:
-                pass
-            client.mkdir('tap_tester')
-            client.chdir('tap_tester')
-
-            # Add subdirectories
-            file_info = self.get_files()
-            for entry in file_info:
-                client.mkdir(entry['directory'])
-
-            # Add csv files
-
-            # Table 1 exists only in 'table_1_files' directory and has id, integer, string columns
-            # Table 2 exists only in 'table_2_files' directory and has id, string, datetime, number columns
-            # Table 3 exists both in 'table_1_files' AND 'table_2_files' directory and has id, integer, string, datetime, number columns
-
-            # add multiple csv files for at least two different tables
-            for file_group in file_info:
-                headers = file_group['headers']
-                directory = file_group['directory']
-                for filename in file_group['files']:
-                    client.chdir(directory)
-                    with client.open(filename, 'w') as f:
-                        writer = csv.writer(f, delimiter=file_group['delimiter'])
-                        lines = [headers] + file_group['generator'](file_group['num_rows'])
-                        writer.writerows(lines)
-                    client.chdir('..')
 
     def expected_check_streams(self):
         return {
