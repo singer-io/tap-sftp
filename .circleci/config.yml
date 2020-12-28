@@ -2,7 +2,7 @@ version: 2
 jobs:
   build:
     docker:
-      - image: 218546966473.dkr.ecr.us-east-1.amazonaws.com/circle-ci:tap-tester
+      - image: 218546966473.dkr.ecr.us-east-1.amazonaws.com/circle-ci:tap-tester-v4
       - image: atmoz/sftp:debian
         command: "test_user:Passw0rd!:::upload"
     steps:
@@ -11,8 +11,9 @@ jobs:
       - run:
           name: 'Setup virtual env'
           command: |
-            virtualenv -p python3 /usr/local/share/virtualenvs/tap-sftp
+            python3 -mvenv /usr/local/share/virtualenvs/tap-sftp
             source /usr/local/share/virtualenvs/tap-sftp/bin/activate
+            pip install -U 'pip<19.2' 'setuptools<51.0.0'
             pip install .[dev]
       # - run:
       #     name: 'pylint'
@@ -22,22 +23,30 @@ jobs:
       - run:
           name: 'Tap Tester'
           command: |
-            aws s3 cp s3://com-stitchdata-dev-deployment-assets/environments/tap-tester/sandbox tap-tester.env
-            source tap-tester.env
+            aws s3 cp s3://com-stitchdata-dev-deployment-assets/environments/tap-tester/sandbox dev_env.sh
+            source dev_env.sh
             source /usr/local/share/virtualenvs/tap-tester/bin/activate
-            cd /root/project/
-            run-a-test --tap=tap-sftp \
-                       --target=target-stitch \
-                       --orchestrator=stitch-orchestrator \
-                       --token="$DEV_TOKEN" \
-                       --client-id=50 \
-                       tap_tester.suites.sftp
+            run-test --tap=tap-sftp \
+                     --target=target-stitch \
+                     --orchestrator=stitch-orchestrator \
+                     --email=harrison+sandboxtest@stitchdata.com \
+                     --password=$SANDBOX_PASSWORD \
+                     --client-id=50 \
+                     tests
+            # cd /root/project/
+            # run-a-test --tap=tap-sftp \
+            #            --target=target-stitch \
+            #            --orchestrator=stitch-orchestrator \
+            #            --token="$DEV_TOKEN" \
+            #            --client-id=50 \
+            #            tap_tester.suites.sftp
 
 workflows:
   version: 2
   commit:
     jobs:
-      - build
+      - build:
+          context: circleci-user
   build_daily:
     triggers:
       - schedule:
@@ -47,4 +56,5 @@ workflows:
               only:
                 - master
     jobs:
-      - build
+      - build:
+          context: circleci-user
