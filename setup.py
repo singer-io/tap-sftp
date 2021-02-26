@@ -13,7 +13,7 @@ setup(
         "singer-python==5.9.0",
         'paramiko==2.6.0',
         'backoff==1.8.0',
-        'singer-encodings @ git+https://github.com/INGCRENGIFO/singer-encodings.git#egg=singer-encodings',
+        'singer-encodings==0.0.9',
         'terminaltables==3.1.0',
     ],
     extras_require={
