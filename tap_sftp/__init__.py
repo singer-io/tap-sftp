@@ -70,6 +70,7 @@ def do_sync(config, catalog, state):
 
 @singer.utils.handle_top_exception(LOGGER)
 def main():
+    LOGGER.info("In main of tap-sftp")
     args = utils.parse_args(REQUIRED_CONFIG_KEYS)
 
     if args.discover:
