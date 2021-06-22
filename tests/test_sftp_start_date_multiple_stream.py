@@ -80,11 +80,10 @@ class TestSFTPStartDateMultipleStream(TestSFTPBase):
 
     def get_properties(self, original: bool = True):
         properties = {
-            'start_date' : '2017-01-01 00:00:00',
+            'start_date' : '2017-01-01T00:00:00Z',
             'host' : os.getenv('TAP_SFTP_HOST'),
             'port' : os.getenv('TAP_SFTP_PORT'),
             'username' : os.getenv('TAP_SFTP_USERNAME'),
-            'private_key_file': None if os.getenv('TAP_SFTP_PRIVATE_KEY_FILE') == "None" else os.getenv('TAP_SFTP_PRIVATE_KEY_FILE'),
             'tables': json.dumps([
                 {
                     "table_name": "table_1",
