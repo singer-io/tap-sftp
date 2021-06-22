@@ -1,5 +1,4 @@
 from base import TestSFTPBase
-from tap_tester.scenario import (SCENARIOS)
 import tap_tester.connections as connections
 import tap_tester.menagerie   as menagerie
 import tap_tester.runner      as runner
@@ -138,7 +137,6 @@ class TestSFTPDelimiter(TestSFTPBase):
         self.assertEqual(self.expected_check_streams(),
                          found_catalog_names)
 
-
         for tap_stream_id in self.expected_check_streams():
             found_stream = [c for c in catalog if c['tap_stream_id'] == tap_stream_id][0]
             stream_metadata = found_stream['metadata']
@@ -175,5 +173,3 @@ class TestSFTPDelimiter(TestSFTPBase):
         for tap_stream_id in self.expected_first_sync_streams():
             self.assertEqual(self.expected_first_sync_row_counts()[tap_stream_id],
                              record_count_by_stream[tap_stream_id])
-
-SCENARIOS.add(TestSFTPDelimiter)
