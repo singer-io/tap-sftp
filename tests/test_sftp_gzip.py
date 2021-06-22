@@ -133,20 +133,20 @@ class TestSFTPGzip(TestSFTPBase):
 
         for tap_stream_id in self.expected_check_streams():
             found_stream = [c for c in catalog if c['tap_stream_id'] == tap_stream_id][0]
-            stream_metadata = found_stream['metadata']
-            main_metadata = [mdata for mdata in stream_metadata if mdata["breadcrumb"] == []]
+            schema_and_metadata = menagerie.get_annotated_schema(conn_id, found_stream['stream_id'])
+            main_metadata = schema_and_metadata["metadata"]
+            stream_metadata = [mdata for mdata in main_metadata if mdata["breadcrumb"] == []]
 
             # assert that the pks are correct
-            self.assertEqual(self.expected_pks()[found_stream['stream']],
-                             set(main_metadata[0]["metadata"]["table-key-properties"]))
+            self.assertEqual(self.expected_pks()[tap_stream_id],
+                             set(stream_metadata[0]['metadata']['table-key-properties']))
 
         for stream_catalog in catalog:
             annotated_schema = menagerie.get_annotated_schema(conn_id, stream_catalog['stream_id'])
-            additional_md = [{ "breadcrumb" : [], "metadata" : {'replication-method' : 'INCREMENTAL'}}]
             selected_metadata = connections.select_catalog_and_fields_via_metadata(conn_id,
                                                                                    stream_catalog,
-                                                                                   annotated_schema,
-                                                                                   additional_md)
+                                                                                   annotated_schema['annotated-schema'],
+                                                                                   [])
 
         # Run sync
         sync_job_name = runner.run_sync_mode(self, conn_id)
