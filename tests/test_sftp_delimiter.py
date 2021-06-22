@@ -149,11 +149,10 @@ class TestSFTPDelimiter(TestSFTPBase):
 
         for stream_catalog in catalog:
             annotated_schema = menagerie.get_annotated_schema(conn_id, stream_catalog['stream_id'])
-            additional_md = [{ "breadcrumb" : [], "metadata" : {'replication-method' : 'INCREMENTAL'}}]
             selected_metadata = connections.select_catalog_and_fields_via_metadata(conn_id,
                                                                                    stream_catalog,
-                                                                                   annotated_schema,
-                                                                                   additional_md)
+                                                                                   annotated_schema['annotated-schema'],
+                                                                                   [])
 
         # Run sync
         sync_job_name = runner.run_sync_mode(self, conn_id)
