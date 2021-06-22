@@ -22,8 +22,8 @@ jobs:
       - run:
           name: 'Tap Tester'
           command: |
-            aws s3 cp s3://com-stitchdata-dev-deployment-assets/environments/tap-tester/sandbox tap-tester.env
-            source tap-tester.env
+            aws s3 cp s3://com-stitchdata-dev-deployment-assets/environments/tap-tester/tap_tester_sandbox dev_env.sh
+            source dev_env.sh
             source /usr/local/share/virtualenvs/tap-tester/bin/activate
             cd /root/project/
             run-test --tap=tap-sftp \
