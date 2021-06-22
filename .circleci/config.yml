@@ -33,7 +33,7 @@ jobs:
                      --password=$SANDBOX_PASSWORD \
                      --token=$DEV_TOKEN \
                      --client-id=50 \
-                     tap_tester.suites.sftp
+                     tests
 workflows:
   version: 2
   commit:
