@@ -26,7 +26,7 @@ jobs:
             source tap-tester.env
             source /usr/local/share/virtualenvs/tap-tester/bin/activate
             cd /root/project/
-            run-test --tap=tap-sftp \
+            run-a-test --tap=tap-sftp \
                      --target=target-stitch \
                      --orchestrator=stitch-orchestrator \
                      --token="$DEV_TOKEN" \
