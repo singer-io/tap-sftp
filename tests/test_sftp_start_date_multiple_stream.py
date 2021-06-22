@@ -134,7 +134,7 @@ class TestSFTPStartDateMultipleStream(TestSFTPBase):
                              record_count_by_stream_1[tap_stream_id])
 
         # changing start date to "utcnow"
-        self.START_DATE = dt.strftime(dt.utcnow(), "%Y-%m-%d %H:%M:%S")
+        self.START_DATE = dt.strftime(dt.utcnow(), "%Y-%m-%dT00:00:00Z")
 
         time.sleep(60)
 
