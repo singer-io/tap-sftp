@@ -1,5 +1,4 @@
 from base import TestSFTPBase
-from tap_tester.scenario import (SCENARIOS)
 import tap_tester.connections as connections
 import tap_tester.menagerie   as menagerie
 import tap_tester.runner      as runner
@@ -171,5 +170,3 @@ class TestSFTPStartDateMultipleStream(TestSFTPBase):
         for tap_stream_id in self.expected_second_sync_streams():
             self.assertEqual(self.expected_second_sync_row_counts()[tap_stream_id],
                              record_count_by_stream_2[tap_stream_id])
-
-SCENARIOS.add(TestSFTPStartDateMultipleStream)
