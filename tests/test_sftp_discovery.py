@@ -127,31 +127,47 @@ class TestSFTPDiscovery(TestSFTPBase):
                          found_catalog_names)
 
         for tap_stream_id in self.expected_check_streams():
-            found_stream = [c for c in catalog if c['tap_stream_id'] == tap_stream_id][0]
-            stream_metadata = found_stream['metadata']
-            main_metadata = [mdata for mdata in stream_metadata if mdata["breadcrumb"] == []]
-            automatic_fields = [mdata["breadcrumb"][1] for mdata in stream_metadata if mdata["metadata"]["inclusion"] == "automatic"]
-
-            # table-key-properties metadata
-            self.assertEqual(self.expected_pks()[tap_stream_id], set(main_metadata[0]["metadata"]["table-key-properties"]))
-
-            # replication method check
-            self.assertEqual('INCREMENTAL', main_metadata[0]["metadata"]['forced-replication-method'])
-
-            # check if all columns are present or not
-            self.assertTrue(set(self.expected_columns()[tap_stream_id])
-                            .issubset(set(found_stream['schema']['properties'].keys())))
-
-            # check if only primary key is "automatic"
-            self.assertEqual(self.expected_pks()[tap_stream_id], set(automatic_fields))
-
-            # check all other fields are "available"
-            self.assertTrue(
-                    all({available_items["metadata"]["inclusion"] == "available"
-                         for available_items in stream_metadata
-                         if available_items.get("breadcrumb", []) != []
-                         and available_items.get("breadcrumb", ["properties", None])[1]
-                         not in automatic_fields}),
-                    msg="Not all non key properties are set to available in metadata")
 
 SCENARIOS.add(TestSFTPDiscovery)
+            with self.subTest(stream=tap_stream_id):
+                found_stream = [c for c in catalog if c['tap_stream_id'] == tap_stream_id][0]
+
+                schema_and_metadata = menagerie.get_annotated_schema(conn_id, found_stream['stream_id'])
+                main_metadata = schema_and_metadata["metadata"]
+                stream_metadata = [mdata for mdata in main_metadata if mdata["breadcrumb"] == []][0]
+
+                automatic_fields = [mdata["breadcrumb"][1]
+                                    for mdata in main_metadata
+                                    if mdata["metadata"]["inclusion"] == "automatic"]
+
+                # table-key-properties metadata
+                self.assertEqual(self.expected_pks()[tap_stream_id],
+                                 set(stream_metadata["metadata"]["table-key-properties"]))
+
+                # replication method check
+                self.assertEqual('INCREMENTAL',
+                                 stream_metadata["metadata"]['forced-replication-method'])
+
+                # check if all columns are present or not
+                self.assertTrue(
+                    set(
+                        self.expected_columns()[tap_stream_id]
+                    ).issubset(
+                        set(
+                            schema_and_metadata['annotated-schema']['properties'].keys()
+                        )
+                    )
+                )
+
+                # check if only primary key is "automatic"
+                self.assertEqual(self.expected_pks()[tap_stream_id],
+                                 set(automatic_fields))
+
+                # check all other fields are "available"
+                self.assertTrue(
+                        all({available_items["metadata"]["inclusion"] == "available"
+                             for available_items in main_metadata
+                             if available_items.get("breadcrumb", []) != []
+                             and available_items.get("breadcrumb", ["properties", None])[1]
+                             not in automatic_fields}),
+                        msg="Not all non key properties are set to available in metadata")
