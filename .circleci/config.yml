@@ -26,6 +26,7 @@ jobs:
             source dev_env.sh
             source /usr/local/share/virtualenvs/tap-tester/bin/activate
             cd /root/project/
+            export TAP_SFTP_PRIVATE_KEY_FILE='None'
             run-test --tap=tap-sftp \
                      --target=target-stitch \
                      --orchestrator=stitch-orchestrator \
