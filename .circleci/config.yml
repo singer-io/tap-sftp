@@ -22,15 +22,14 @@ jobs:
       - run:
           name: 'Tap Tester'
           command: |
-            aws s3 cp s3://com-stitchdata-dev-deployment-assets/environments/tap-tester/tap_tester_sandbox dev_env.env
-            source dev_env.env
+            aws s3 cp s3://com-stitchdata-dev-deployment-assets/environments/tap-tester/sandbox tap-tester.env
+            source tap-tester.env
             source /usr/local/share/virtualenvs/tap-tester/bin/activate
             cd /root/project/
             run-test --tap=tap-sftp \
                      --target=target-stitch \
                      --orchestrator=stitch-orchestrator \
-                     --email=harrison+sandboxtest@stitchdata.com \
-                     --password=$SANDBOX_PASSWORD \
+                     --token="$DEV_TOKEN" \
                      --client-id=50 \
                      tests
 
