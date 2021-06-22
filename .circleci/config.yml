@@ -31,7 +31,7 @@ jobs:
                        --orchestrator=stitch-orchestrator \
                        --token="$DEV_TOKEN" \
                        --client-id=50 \
-                       tap_tester.suites.sftp
+                       tests
 
 workflows:
   version: 2
