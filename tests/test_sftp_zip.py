@@ -140,15 +140,18 @@ class TestSFTPZip(TestSFTPBase):
         self.assertEqual(self.expected_check_streams(),
                          found_catalog_names)
 
-
         for tap_stream_id in self.expected_check_streams():
-            found_stream = [c for c in catalog if c['tap_stream_id'] == tap_stream_id][0]
-            stream_metadata = found_stream['metadata']
-            main_metadata = [mdata for mdata in stream_metadata if mdata["breadcrumb"] == []]
+            with self.subTest(stream=tap_stream_id):
+                found_stream = [c for c in catalog if c['tap_stream_id'] == tap_stream_id][0]
 
-            # assert that the pks are correct
-            self.assertEqual(self.expected_pks()[found_stream['stream']],
-                             set(main_metadata[0]["metadata"]["table-key-properties"]))
+                schema_and_metadata = menagerie.get_annotated_schema(conn_id, found_stream['stream_id'])
+                main_metadata = schema_and_metadata["metadata"]
+                stream_metadata = [mdata for mdata in main_metadata if mdata["breadcrumb"] == []][0]
+
+                # table-key-properties metadata
+                self.assertEqual(self.expected_pks()[tap_stream_id],
+                                 set(stream_metadata["metadata"]["table-key-properties"]))
+
 
         for stream_catalog in catalog:
             annotated_schema = menagerie.get_annotated_schema(conn_id, stream_catalog['stream_id'])
