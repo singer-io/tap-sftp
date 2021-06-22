@@ -1,5 +1,4 @@
 from base import TestSFTPBase
-from tap_tester.scenario import (SCENARIOS)
 import tap_tester.connections as connections
 import tap_tester.menagerie   as menagerie
 import tap_tester.runner      as runner
@@ -127,8 +126,6 @@ class TestSFTPDiscovery(TestSFTPBase):
                          found_catalog_names)
 
         for tap_stream_id in self.expected_check_streams():
-
-SCENARIOS.add(TestSFTPDiscovery)
             with self.subTest(stream=tap_stream_id):
                 found_stream = [c for c in catalog if c['tap_stream_id'] == tap_stream_id][0]
 
