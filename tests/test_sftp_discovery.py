@@ -81,7 +81,6 @@ class TestSFTPDiscovery(TestSFTPBase):
             'host' : os.getenv('TAP_SFTP_HOST'),
             'port' : os.getenv('TAP_SFTP_PORT'),
             'username' : os.getenv('TAP_SFTP_USERNAME'),
-            'private_key_file': None if os.getenv('TAP_SFTP_PRIVATE_KEY_FILE') == "None" else os.getenv('TAP_SFTP_PRIVATE_KEY_FILE'),
             'tables': json.dumps([
                 {
                     "table_name": "table_1",
