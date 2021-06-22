@@ -1,5 +1,4 @@
 from base import TestSFTPBase
-from tap_tester.scenario import (SCENARIOS)
 import tap_tester.connections as connections
 import tap_tester.menagerie   as menagerie
 import tap_tester.runner      as runner
@@ -91,11 +90,10 @@ class TestSFTPZip(TestSFTPBase):
 
     def get_properties(self):
         return {
-            'start_date' : '2017-01-01 00:00:00',
+            'start_date' : '2017-01-01T00:00:00Z',
             'host' : os.getenv('TAP_SFTP_HOST'),
             'port' : os.getenv('TAP_SFTP_PORT'),
             'username' : os.getenv('TAP_SFTP_USERNAME'),
-            'private_key_file': None if os.getenv('TAP_SFTP_PRIVATE_KEY_FILE') == "None" else os.getenv('TAP_SFTP_PRIVATE_KEY_FILE'),
             'tables': json.dumps([
                 {
                     "table_name": "table_1",
@@ -179,5 +177,3 @@ class TestSFTPZip(TestSFTPBase):
         for tap_stream_id in self.expected_first_sync_streams():
             self.assertEqual(self.expected_first_sync_row_counts()[tap_stream_id],
                              record_count_by_stream[tap_stream_id])
-
-SCENARIOS.add(TestSFTPZip)
