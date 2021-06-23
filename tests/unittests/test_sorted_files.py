@@ -45,8 +45,8 @@ class TestSortedFiles(unittest.TestCase):
 
         files = conn.get_files("/root", "file.*.csv")
 
-        # expected files in decreasing order of "last_modified"
-        expected_files_list = ["/root/file4.csv", "/root/file2.csv", "/root/file3.csv", "/root/file1.csv"]
-        acutal_files_list = [f["filepath"] for f in files]
+        # expected files in increasing order of "last_modified"
+        expected_files_list = ["/root/file1.csv", "/root/file3.csv", "/root/file2.csv", "/root/file4.csv"]
+        actual_files_list = [f["filepath"] for f in files]
 
-        self.assertEquals(expected_files_list, acutal_files_list)
+        self.assertEquals(expected_files_list, actual_files_list)
