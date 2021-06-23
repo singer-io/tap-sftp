@@ -193,9 +193,9 @@ class TestSFTPBase(unittest.TestCase):
         password = os.getenv('TAP_SFTP_PASSWORD')
         host = os.getenv('TAP_SFTP_HOST')
         port = os.getenv('TAP_SFTP_PORT')
-        private_key_file = os.getenv('TAP_SFTP_PRIVATE_KEY_FILE')
+        private_key_file = None
         key = None
-        if private_key_file != "None":
+        if not private_key_file:
             with open(private_key_file) as f:
                 key = paramiko.RSAKey.from_private_key(f)
 

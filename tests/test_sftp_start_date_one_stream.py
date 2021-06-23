@@ -27,10 +27,9 @@ class TestSFTPStartDateOneStream(TestSFTPBase):
     def setUp(self):
         if not all([x for x in [os.getenv('TAP_SFTP_USERNAME'),
                                 os.getenv('TAP_SFTP_PASSWORD'),
-                                os.getenv('TAP_SFTP_ROOT_DIR'),
-                                os.getenv('TAP_SFTP_PRIVATE_KEY_FILE')]]):
+                                os.getenv('TAP_SFTP_ROOT_DIR')]]):
             #pylint: disable=line-too-long
-            raise Exception("set TAP_SFTP_USERNAME, TAP_SFTP_PASSWORD, TAP_SFTP_ROOT_DIR, TAP_SFTP_PRIVATE_KEY_FILE")
+            raise Exception("set TAP_SFTP_USERNAME, TAP_SFTP_PASSWORD, TAP_SFTP_ROOT_DIR")
 
         root_dir = os.getenv('TAP_SFTP_ROOT_DIR')
 
