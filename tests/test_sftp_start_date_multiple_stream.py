@@ -112,13 +112,13 @@ class TestSFTPStartDateMultipleStream(TestSFTPBase):
     def test_run(self):
 
         # sync 1
-        conn_id_1 = connections.ensure_connection(self)
+        conn_id = connections.ensure_connection(self)
 
-        found_catalogs_1 = self.run_and_verify_check_mode(conn_id_1)
+        found_catalogs_1 = self.run_and_verify_check_mode(conn_id)
 
-        self.perform_and_verify_table_and_field_selection(conn_id_1,found_catalogs_1)
+        self.perform_and_verify_table_and_field_selection(conn_id,found_catalogs_1)
 
-        record_count_by_stream_1 = self.run_and_verify_sync(conn_id_1)
+        record_count_by_stream_1 = self.run_and_verify_sync(conn_id)
 
         # checking if we got any data from sync 1
         self.assertGreater(sum(record_count_by_stream_1.values()), 0)
@@ -127,8 +127,8 @@ class TestSFTPStartDateMultipleStream(TestSFTPBase):
             self.assertEqual(self.expected_first_sync_row_counts()[tap_stream_id],
                              record_count_by_stream_1[tap_stream_id])
 
-        # changing start date to "utcnow"
-        self.START_DATE = dt.strftime(dt.utcnow(), "%Y-%m-%dT%H:%M:%SZ")
+        # getting state
+        state = menagerie.get_state(conn_id)
 
         time.sleep(60)
 
@@ -146,16 +146,13 @@ class TestSFTPStartDateMultipleStream(TestSFTPBase):
         # adding some data to file "table_1_fileA" and "table_3_fileA"
         self.append_to_files()
 
+        # setting state
+        menagerie.set_state(conn_id, state)
+
         # sync 2
-        conn_id_2 = connections.ensure_connection(self, original_properties = False)
-
-        found_catalogs_2 = self.run_and_verify_check_mode(conn_id_2)
-
-        self.perform_and_verify_table_and_field_selection(conn_id_2,found_catalogs_2)
+        record_count_by_stream_2 = self.run_and_verify_sync(conn_id, second_sync = True)
 
         # checking if we got any data from sync 2
-        record_count_by_stream_2 = self.run_and_verify_sync(conn_id_2, second_sync = True)
-
         self.assertGreater(sum(record_count_by_stream_2.values()), 0)
 
         # checking if data after in 2nd sync is as expected
