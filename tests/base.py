@@ -193,15 +193,10 @@ class TestSFTPBase(unittest.TestCase):
         password = os.getenv('TAP_SFTP_PASSWORD')
         host = os.getenv('TAP_SFTP_HOST')
         port = os.getenv('TAP_SFTP_PORT')
-        private_key_file = None
-        key = None
-        if not private_key_file:
-            with open(private_key_file) as f:
-                key = paramiko.RSAKey.from_private_key(f)
 
         transport = paramiko.Transport((host, int(port)))
         transport.use_compression(True)
-        transport.connect(username = username, password = password, hostkey = None, pkey = key)
+        transport.connect(username = username, password = password, hostkey = None, pkey = None)
         return paramiko.SFTPClient.from_transport(transport)
 
     def random_string_generator(self, size=6, chars=string.ascii_uppercase + string.digits):
