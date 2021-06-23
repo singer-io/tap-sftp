@@ -78,12 +78,8 @@ class TestSFTPStartDateMultipleStream(TestSFTPBase):
                     client.chdir('..')
 
     def get_properties(self, original: bool = True):
-        properties = {
-            'start_date' : '2017-01-01T00:00:00Z',
-            'host' : os.getenv('TAP_SFTP_HOST'),
-            'port' : os.getenv('TAP_SFTP_PORT'),
-            'username' : os.getenv('TAP_SFTP_USERNAME'),
-            'tables': json.dumps([
+        props = self.get_common_properties()
+        props['tables'] = json.dumps([
                 {
                     "table_name": "table_1",
                     "delimiter": ",",
@@ -108,12 +104,11 @@ class TestSFTPStartDateMultipleStream(TestSFTPBase):
                     "date_overrides": ["datetime_col"]
                 }
             ])
-        }
         if original:
-            return properties
+            return props
         
-        properties["start_date"] = self.START_DATE
-        return properties
+        props["start_date"] = self.START_DATE
+        return props
 
     def test_run(self):
 
@@ -134,7 +129,7 @@ class TestSFTPStartDateMultipleStream(TestSFTPBase):
                              record_count_by_stream_1[tap_stream_id])
 
         # changing start date to "utcnow"
-        self.START_DATE = dt.strftime(dt.utcnow(), "%Y-%m-%dT00:00:00Z")
+        self.START_DATE = dt.strftime(dt.utcnow(), "%Y-%m-%dT%H:%M:%SZ")
 
         time.sleep(60)
 

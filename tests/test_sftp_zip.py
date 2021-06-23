@@ -89,12 +89,8 @@ class TestSFTPZip(TestSFTPBase):
         }
 
     def get_properties(self):
-        return {
-            'start_date' : '2017-01-01T00:00:00Z',
-            'host' : os.getenv('TAP_SFTP_HOST'),
-            'port' : os.getenv('TAP_SFTP_PORT'),
-            'username' : os.getenv('TAP_SFTP_USERNAME'),
-            'tables': json.dumps([
+        props = self.get_common_properties()
+        props['tables'] = json.dumps([
                 {
                     "table_name": "table_1",
                     "search_prefix": os.getenv("TAP_SFTP_ROOT_DIR") + "/tap_tester",
@@ -119,7 +115,7 @@ class TestSFTPZip(TestSFTPBase):
                     "date_overrides": ["datetime_col"]
                 }
             ])
-        }
+        return props
 
     def test_run(self):
 

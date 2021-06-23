@@ -90,12 +90,8 @@ class TestSFTPSync(TestSFTPBase):
         }
 
     def get_properties(self, original: bool = True):
-        properties = {
-            'start_date' : '2017-01-01T00:00:00Z',
-            'host' : os.getenv('TAP_SFTP_HOST'),
-            'port' : os.getenv('TAP_SFTP_PORT'),
-            'username' : os.getenv('TAP_SFTP_USERNAME'),
-            'tables': json.dumps([
+        props = self.get_common_properties()
+        props['tables'] = json.dumps([
                 {
                     "table_name": "table_1",
                     "delimiter": ",",
@@ -120,12 +116,11 @@ class TestSFTPSync(TestSFTPBase):
                     "date_overrides": ["datetime_col"]
                 }
             ])
-        }
         if original:
-            return properties
+            return props
         
-        properties["start_date"] = self.START_DATE
-        return properties
+        props["start_date"] = self.START_DATE
+        return props
 
     def test_run(self):
 

@@ -322,6 +322,67 @@ class TestSFTPBase(unittest.TestCase):
                     writer.writerows(lines)
                 client.chdir('..')
 
+    def get_common_properties(self):
+        return {'start_date' : '2017-01-01T00:00:00Z',
+                    'host' : os.getenv('TAP_SFTP_HOST'),
+                    'port' : os.getenv('TAP_SFTP_PORT'),
+                    'username' : os.getenv('TAP_SFTP_USERNAME')}
+
+    def run_test(self):
+        conn_id = connections.ensure_connection(self)
+
+        # run in discovery mode
+        check_job_name = runner.run_check_mode(self, conn_id)
+
+        # verify check  exit codes
+        exit_status = menagerie.get_exit_status(conn_id, check_job_name)
+        menagerie.verify_check_exit_status(self, exit_status, check_job_name)
+
+        # verify the tap discovered the right streams
+        catalog = menagerie.get_catalogs(conn_id)
+        found_catalog_names = set(map(lambda c: c['tap_stream_id'], catalog))
+
+        # assert we find the correct streams
+        self.assertEqual(self.expected_check_streams(),
+                            found_catalog_names)
+
+        for tap_stream_id in self.expected_check_streams():
+            found_stream = [c for c in catalog if c['tap_stream_id'] == tap_stream_id][0]
+            schema_and_metadata = menagerie.get_annotated_schema(conn_id, found_stream['stream_id'])
+            main_metadata = schema_and_metadata["metadata"]
+            stream_metadata = [mdata for mdata in main_metadata if mdata["breadcrumb"] == []]
+
+            # assert that the pks are correct
+            self.assertEqual(self.expected_pks()[tap_stream_id],
+                                set(stream_metadata[0]['metadata']['table-key-properties']))
+
+        for stream_catalog in catalog:
+            annotated_schema = menagerie.get_annotated_schema(conn_id, stream_catalog['stream_id'])
+            selected_metadata = connections.select_catalog_and_fields_via_metadata(conn_id,
+                                                                                    stream_catalog,
+                                                                                    annotated_schema['annotated-schema'],
+                                                                                    [])
+
+        # Run sync
+        sync_job_name = runner.run_sync_mode(self, conn_id)
+
+        exit_status = menagerie.get_exit_status(conn_id, sync_job_name)
+        menagerie.verify_sync_exit_status(self, exit_status, sync_job_name)
+
+        # verify the persisted schema was correct
+        messages_by_stream = runner.get_records_from_target_output()
+
+        # assert that each of the streams that we synced are the ones that we expect to see
+        record_count_by_stream = runner.examine_target_output_file(self,
+                                                                    conn_id,
+                                                                    self.expected_first_sync_streams(),
+                                                                    self.expected_pks())
+
+        # Verify that the full table was syncd
+        for tap_stream_id in self.expected_first_sync_streams():
+            self.assertEqual(self.expected_first_sync_row_counts()[tap_stream_id],
+                                record_count_by_stream[tap_stream_id])
+
     # helper functions
     def run_and_verify_check_mode(self, conn_id):
         """
