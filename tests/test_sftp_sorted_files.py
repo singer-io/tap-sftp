@@ -6,7 +6,6 @@ import tap_tester.runner      as runner
 import os
 import csv
 import json
-import pathlib
 import datetime
 
 RECORD_COUNT = {}
@@ -104,12 +103,15 @@ class TestSFTPOrderedFiles(TestSFTPBase):
 
     # returns the last modified date of all the files present in the folder
     def get_last_modified(self):
-        directory = os.getenv('TAP_SFTP_ROOT_DIR') + '/tap_tester/folderA'
+        root_dir = os.getenv('TAP_SFTP_ROOT_DIR')
 
-        last_modified = []
-        for file in os.listdir(directory):
-            fname = pathlib.Path(os.path.join(directory, file))
-            last_modified.append(datetime.datetime.fromtimestamp(fname.stat().st_mtime))
+        with self.get_test_connection() as client:
+            client.chdir(root_dir + '/tap_tester/folderA')
+            files = client.listdir_attr('.')
+            last_modified = []
+            for file in files:
+                last_modified.append(datetime.datetime.fromtimestamp(file.st_mtime))
+
         return last_modified
 
     def test_run(self):
