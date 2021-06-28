@@ -98,23 +98,6 @@ class TestSFTPStartDateOneStream(TestSFTPBase):
         props["start_date"] = self.START_DATE
         return props
 
-    def append_to_files(self):
-        root_dir = os.getenv('TAP_SFTP_ROOT_DIR')
-
-        with self.get_test_connection() as client:
-            client.chdir(root_dir + '/tap_tester')
-
-            # Append stuff to a subset of the files
-            file_group = self.get_files()[0]
-            directory = file_group['directory']
-            for filename in file_group['files']:
-                client.chdir(directory)
-                with client.open(filename, 'a') as f:
-                    writer = csv.writer(f)
-                    lines = file_group['generator'](10)
-                    writer.writerows(lines)
-                client.chdir('..')
-
     def test_run(self):
         self.file_modified_test()
         self.file_not_modified_test()
