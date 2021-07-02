@@ -3,8 +3,6 @@ import tap_tester.connections as connections
 import tap_tester.menagerie   as menagerie
 import tap_tester.runner      as runner
 import os
-import time
-from datetime import datetime as dt
 import csv
 import json
 
@@ -129,8 +127,6 @@ class TestSFTPStartDateMultipleStream(TestSFTPBase):
 
         # getting state
         state = menagerie.get_state(conn_id)
-
-        time.sleep(60)
 
         # creating file "table_1_fileB"
         with self.get_test_connection() as client:

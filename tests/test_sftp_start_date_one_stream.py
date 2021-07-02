@@ -3,11 +3,9 @@ import tap_tester.connections as connections
 import tap_tester.menagerie   as menagerie
 import tap_tester.runner      as runner
 import os
-import time
 import csv
 import json
 from datetime import datetime as dt
-from datetime import timedelta
 
 RECORD_COUNT = {}
 
@@ -120,8 +118,6 @@ class TestSFTPStartDateOneStream(TestSFTPBase):
         # changing start date to "utcnow"
         self.START_DATE = dt.strftime(dt.utcnow(), "%Y-%m-%dT00:00:00Z")
 
-        time.sleep(60)
-
         # adding some data to the file
         self.append_to_files()
 
@@ -179,8 +175,6 @@ class TestSFTPStartDateOneStream(TestSFTPBase):
 
         # changing start date to "utcnow"
         self.START_DATE = dt.strftime(dt.utcnow(), "%Y-%m-%dT00:00:00Z")
-
-        time.sleep(60)
 
         # sync 2
         conn_id_2 = connections.ensure_connection(self, original_properties = False)

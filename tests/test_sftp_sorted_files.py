@@ -22,7 +22,9 @@ class TestSFTPOrderedFiles(TestSFTPBase):
                 "headers": ['id', 'string_col', 'integer_col'],
                 "directory": "folderA",
                 "files": ["table_1_file.csv", "table_2_file.csv", "table_3_file.csv", "table_4_file.csv", "table_5_file.csv"],
-                "num_rows": 50,
+                # adding greater number of rows as it takes some time
+                # so we can test modified date
+                "num_rows": 1500,
                 "generator": self.generate_simple_csv_lines_typeA
             }
         ]
@@ -61,7 +63,6 @@ class TestSFTPOrderedFiles(TestSFTPBase):
                         writer = csv.writer(f)
                         lines = [headers] + file_group['generator'](file_group['num_rows'])
                         writer.writerows(lines)
-                        time.sleep(5)
                     client.chdir('..')
 
     def expected_check_streams(self):
@@ -76,7 +77,7 @@ class TestSFTPOrderedFiles(TestSFTPBase):
 
     def expected_sync_row_counts(self):
         return {
-            'table': 280
+            'table': 12000
         }
 
     def expected_first_sync_streams(self):

@@ -140,12 +140,12 @@ class TestSFTPBase(unittest.TestCase):
             headers = file_group['headers']
             directory = file_group['directory']
             for filename in file_group['files'] if files_list is None else files_list:
-                if files_list:
-                    time.sleep(7)
                 client.chdir(directory)
                 with client.open(filename, 'a') as f:
                     writer = csv.writer(f)
-                    lines = file_group['generator'](10)
+                    # appending greater number of rows as it takes some time
+                    # so we can test modified date
+                    lines = file_group['generator'](1500 if files_list else 10)
                     writer.writerows(lines)
                 client.chdir('..')
 
