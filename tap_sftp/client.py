@@ -141,7 +141,9 @@ class SFTPConnection():
         if modified_since is not None:
             matching_files = [f for f in matching_files if f["last_modified"] > modified_since]
 
-        return matching_files
+        # sort files in increasing order of "last_modified"
+        sorted_files = sorted(matching_files, key = lambda x: (x['last_modified']).timestamp())
+        return sorted_files
 
     def get_file_handle(self, f):
         """ Takes a file dict {"filepath": "...", "last_modified": "..."} and returns a handle to the file. """

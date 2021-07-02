@@ -1,4 +1,4 @@
-from tap_tester.scenario import (SCENARIOS)
+import time
 import tap_tester.connections as connections
 import tap_tester.menagerie   as menagerie
 import tap_tester.runner      as runner
@@ -129,7 +129,7 @@ class TestSFTPBase(unittest.TestCase):
     def get_credentials(self):
         return {'password': os.getenv('TAP_SFTP_PASSWORD')}
 
-    def append_to_files(self):
+    def append_to_files(self, files_list=None):
         root_dir = os.getenv('TAP_SFTP_ROOT_DIR')
 
         with self.get_test_connection() as client:
@@ -139,11 +139,13 @@ class TestSFTPBase(unittest.TestCase):
             file_group = self.get_files()[0]
             headers = file_group['headers']
             directory = file_group['directory']
-            for filename in file_group['files']:
+            for filename in file_group['files'] if files_list is None else files_list:
                 client.chdir(directory)
                 with client.open(filename, 'a') as f:
                     writer = csv.writer(f)
-                    lines = file_group['generator'](10)
+                    # appending greater number of rows as it takes some time
+                    # so we can test modified date
+                    lines = file_group['generator'](1500 if files_list else 10)
                     writer.writerows(lines)
                 client.chdir('..')
 

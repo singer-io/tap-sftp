@@ -3,11 +3,9 @@ import tap_tester.connections as connections
 import tap_tester.menagerie   as menagerie
 import tap_tester.runner      as runner
 import os
-import time
 import csv
 import json
 from datetime import datetime as dt
-from datetime import timedelta
 
 RECORD_COUNT = {}
 
@@ -98,23 +96,6 @@ class TestSFTPStartDateOneStream(TestSFTPBase):
         props["start_date"] = self.START_DATE
         return props
 
-    def append_to_files(self):
-        root_dir = os.getenv('TAP_SFTP_ROOT_DIR')
-
-        with self.get_test_connection() as client:
-            client.chdir(root_dir + '/tap_tester')
-
-            # Append stuff to a subset of the files
-            file_group = self.get_files()[0]
-            directory = file_group['directory']
-            for filename in file_group['files']:
-                client.chdir(directory)
-                with client.open(filename, 'a') as f:
-                    writer = csv.writer(f)
-                    lines = file_group['generator'](10)
-                    writer.writerows(lines)
-                client.chdir('..')
-
     def test_run(self):
         self.file_modified_test()
         self.file_not_modified_test()
@@ -136,8 +117,6 @@ class TestSFTPStartDateOneStream(TestSFTPBase):
 
         # changing start date to "utcnow"
         self.START_DATE = dt.strftime(dt.utcnow(), "%Y-%m-%dT00:00:00Z")
-
-        time.sleep(60)
 
         # adding some data to the file
         self.append_to_files()
@@ -196,8 +175,6 @@ class TestSFTPStartDateOneStream(TestSFTPBase):
 
         # changing start date to "utcnow"
         self.START_DATE = dt.strftime(dt.utcnow(), "%Y-%m-%dT00:00:00Z")
-
-        time.sleep(60)
 
         # sync 2
         conn_id_2 = connections.ensure_connection(self, original_properties = False)

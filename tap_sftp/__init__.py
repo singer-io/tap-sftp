@@ -53,7 +53,9 @@ def do_sync(config, catalog, state):
     rows = []
 
     for table_name, table_data in STATS.items():
-        for filepath, file_data in table_data['files'].items():
+        # sort STATS data in order of "last_modified" for summary as python3.5 re-arranges the data
+        sorted_data = sorted(table_data["files"].items(), key=lambda a: a[1]["last_modified"])
+        for filepath, file_data in sorted_data:
             rows.append([table_name,
                          table_data['search_prefix'],
                          table_data['search_pattern'],
