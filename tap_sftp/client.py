@@ -111,8 +111,8 @@ class SFTPConnection():
 
                 # skip gzip file if it is empty
                 if file_attr.filename.endswith('.gz'):
-                    with self.sftp.open(prefix + '/' + file_attr.filename, "rb") as f:
-                        with gzip.GzipFile(fileobj=f, mode='rb') as gzip_file:
+                    with self.sftp.open(prefix + '/' + file_attr.filename, "rb") as file:
+                        with gzip.GzipFile(fileobj=file, mode='rb') as gzip_file:
                             try:
                                 data = gzip_file.read()
                             except OSError:
