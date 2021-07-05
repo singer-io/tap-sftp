@@ -21,12 +21,12 @@ class TestSFTPEmptyCSVInGZ(TestSFTPBase):
                 # empty 'csv.gz' file as 'num_rows' is not given
                 "headers": [],
                 "directory": "test_empty_csv_in_gz",
-                "files": ["table1.csv.gz"]
+                "files": ["table_1.csv.gz"]
             },
             {
                 "headers": ['id', 'string_col', 'integer_col'],
                 "directory": "test_empty_csv_in_gz",
-                "files": ["table2.csv.gz"],
+                "files": ["table_2.csv.gz"],
                 "num_rows": 50,
                 "generator": self.generate_simple_csv_lines_typeA
             }
@@ -98,7 +98,7 @@ class TestSFTPEmptyCSVInGZ(TestSFTPBase):
                     "table_name": "table",
                     "delimiter": ",",
                     "search_prefix": os.getenv("TAP_SFTP_ROOT_DIR") + "/tap_tester",
-                    "search_pattern": "table.*.gz",
+                    "search_pattern": "table.*csv",
                     "key_properties": ['id']
                 }
             ])
