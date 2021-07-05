@@ -7,6 +7,7 @@ import re
 import singer
 import stat
 import time
+import gzip
 from datetime import datetime
 from paramiko.ssh_exception import AuthenticationException, SSHException
 
@@ -107,6 +108,18 @@ class SFTPConnection():
             else:
                 if is_empty(file_attr):
                     continue
+
+                # handle gzip file
+                if file_attr.filename.endswith('.gz'):
+                    with gzip.open(prefix + '/' + file_attr.filename, "rb") as f:
+                        try:
+                            data = f.read()
+                        except OSError:
+                            LOGGER.info("Skipping %s file as it is not a gzipped file.", file_attr.filename)
+                            continue
+                        if len(data) == 0:
+                            LOGGER.info("Skipping %s file as it is empty.", file_attr.filename)
+                            continue
 
                 last_modified = file_attr.st_mtime
                 if last_modified is None:
