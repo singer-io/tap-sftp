@@ -20,12 +20,12 @@ class TestSFTPEmptyCSVInGZ(TestSFTPBase):
             {
                 # empty 'csv.gz' file as 'num_rows' is not given
                 "headers": [],
-                "directory": "test_empty_csv_in_gz",
+                "directory": "test_csv_empty",
                 "files": ["table_1.csv.gz"]
             },
             {
                 "headers": ['id', 'string_col', 'integer_col'],
-                "directory": "test_empty_csv_in_gz",
+                "directory": "test_csv_data",
                 "files": ["table_2.csv.gz"],
                 "num_rows": 50,
                 "generator": self.generate_simple_csv_lines_typeA
@@ -53,7 +53,8 @@ class TestSFTPEmptyCSVInGZ(TestSFTPBase):
 
             # Add subdirectories
             file_info = self.get_files()
-            client.mkdir('test_empty_csv_in_gz')
+            for entry in file_info:
+                client.mkdir(entry['directory'])
 
             # Add csv files
             for file_group in file_info:
