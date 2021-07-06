@@ -84,17 +84,20 @@ class SFTPConnection():
         return [f for f in files if matcher.search(f["filepath"])]
 
     def check_gzip_to_skip(self, filename):
-        with self.sftp.open(filename, "rb") as file:
-            with gzip.GzipFile(fileobj=file, mode='rb') as gzip_file:
-                try:
+        try:
+            with self.sftp.open(filename, "rb") as file:
+                with gzip.GzipFile(fileobj=file, mode='rb') as gzip_file:
                     data = gzip_file.read()
-                except OSError:
-                    LOGGER.info("Skipping %s file as it is not a gzipped file.", filename)
-                    return True
-                if len(data) == 0:
-                    LOGGER.info("Skipping %s file as it is empty.", filename)
-                    return True
-        return False
+                    if len(data) == 0:
+                        LOGGER.info("Skipping %s file as it is empty.", filename)
+                        return True
+            return False
+        except OSError as e:
+            if "Permission denied" in str(e):
+                LOGGER.info("Skipping %s file as you do not have enough permissions.", filename)
+                return True
+            LOGGER.info("Skipping %s file as it is not a gzipped file.", filename)
+            return True
 
     def get_files_by_prefix(self, prefix):
         """
