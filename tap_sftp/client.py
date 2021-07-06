@@ -83,6 +83,19 @@ class SFTPConnection():
         matcher = re.compile(search_pattern)
         return [f for f in files if matcher.search(f["filepath"])]
 
+    def check_gzip_to_skip(self, filename):
+        with self.sftp.open(filename, "rb") as file:
+            with gzip.GzipFile(fileobj=file, mode='rb') as gzip_file:
+                try:
+                    data = gzip_file.read()
+                except OSError:
+                    LOGGER.info("Skipping %s file as it is not a gzipped file.", filename)
+                    return True
+                if len(data) == 0:
+                    LOGGER.info("Skipping %s file as it is empty.", filename)
+                    return True
+        return False
+
     def get_files_by_prefix(self, prefix):
         """
         Accesses the underlying file system and gets all files that match "prefix", in this case, a directory path.
@@ -110,17 +123,8 @@ class SFTPConnection():
                     continue
 
                 # skip gzip file if it is empty
-                if file_attr.filename.endswith('.gz'):
-                    with self.sftp.open(prefix + '/' + file_attr.filename, "rb") as file:
-                        with gzip.GzipFile(fileobj=file, mode='rb') as gzip_file:
-                            try:
-                                data = gzip_file.read()
-                            except OSError:
-                                LOGGER.info("Skipping %s file as it is not a gzipped file.", prefix + '/' + file_attr.filename)
-                                continue
-                            if len(data) == 0:
-                                LOGGER.info("Skipping %s file as it is empty.", prefix + '/' + file_attr.filename)
-                                continue
+                if file_attr.filename.endswith('.gz') and self.check_gzip_to_skip(prefix + '/' + file_attr.filename):
+                    continue
 
                 last_modified = file_attr.st_mtime
                 if last_modified is None:
