@@ -48,6 +48,8 @@ def sync_file(conn, f, stream, table_spec):
     LOGGER.info('Syncing file "%s".', f["filepath"])
 
     file_handle = conn.get_file_handle(f)
+    if file_handle is None:
+        return 0
 
     # Add file_name to opts and flag infer_compression to support gzipped files
     opts = {'key_properties': table_spec['key_properties'],
