@@ -169,7 +169,7 @@ class SFTPConnection():
     def get_file_handle(self, f):
         """ Takes a file dict {"filepath": "...", "last_modified": "..."}
         -> returns a handle to the file.
-        -> returns None in case of error """
+        -> raises error with appropriate logger message """
         try:
             return self.sftp.open(f["filepath"], 'rb')
         except OSError as e:
