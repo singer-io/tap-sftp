@@ -83,20 +83,20 @@ class SFTPConnection():
         matcher = re.compile(search_pattern)
         return [f for f in files if matcher.search(f["filepath"])]
 
-    def check_gzip_to_skip(self, filename):
+    def should_skip_gzip_file(self, filename):
         try:
             with self.sftp.open(filename, "rb") as file:
                 with gzip.GzipFile(fileobj=file, mode='rb') as gzip_file:
                     data = gzip_file.read()
                     if len(data) == 0:
-                        LOGGER.info("Skipping %s file as it is empty.", filename)
+                        LOGGER.info("Skipping %s file because it is empty.", filename)
                         return True
             return False
         except OSError as e:
             if "Permission denied" in str(e):
-                LOGGER.info("Skipping %s file as you do not have enough permissions.", filename)
+                LOGGER.info("Skipping %s file because you do not have enough permissions.", filename)
                 return True
-            LOGGER.info("Skipping %s file as it is not a gzipped file.", filename)
+            LOGGER.info("Skipping %s file because it is not a gzipped file.", filename)
             return True
 
     def get_files_by_prefix(self, prefix):
@@ -126,7 +126,7 @@ class SFTPConnection():
                     continue
 
                 # skip gzip file if it is empty
-                if file_attr.filename.endswith('.gz') and self.check_gzip_to_skip(prefix + '/' + file_attr.filename):
+                if file_attr.filename.endswith('.gz') and self.should_skip_gzip_file(prefix + '/' + file_attr.filename):
                     continue
 
                 last_modified = file_attr.st_mtime
@@ -174,10 +174,10 @@ class SFTPConnection():
             return self.sftp.open(f["filepath"], 'rb')
         except OSError as e:
             if "Permission denied" in str(e):
-                LOGGER.info("Skipping %s file as you do not have enough permissions.", f["filepath"])
-                return None
-            LOGGER.info("Skipping %s file as there is some problem in opening it.", f["filepath"])
-            return None
+                LOGGER.info("Skipping %s file because you do not have enough permissions.", f["filepath"])
+            else:
+                LOGGER.info("Skipping %s file because it is unable to be read.", f["filepath"])
+            raise OSError
 
     def get_files_matching_pattern(self, files, pattern):
         """ Takes a file dict {"filepath": "...", "last_modified": "..."} and a regex pattern string, and returns files matching that pattern. """

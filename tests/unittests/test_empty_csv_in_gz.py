@@ -16,10 +16,10 @@ class TestEmptyCSVinGZ(unittest.TestCase):
 
         conn = client.SFTPConnection("10.0.0.1", "username", port="22")
 
-        gzip = conn.check_gzip_to_skip("/root_dir/file.csv.gz")
+        gzip = conn.should_skip_gzip_file("/root_dir/file.csv.gz")
 
         self.assertEquals(gzip, True)
-        mocked_logger.assert_called_with("Skipping %s file as it is empty.", "/root_dir/file.csv.gz")
+        mocked_logger.assert_called_with("Skipping %s file because it is empty.", "/root_dir/file.csv.gz")
 
     @mock.patch("gzip.GzipFile")
     def test_empty_file_positive(self, mocked_gzip, mocked_logger, mocked_connect):
@@ -29,7 +29,7 @@ class TestEmptyCSVinGZ(unittest.TestCase):
 
         conn = client.SFTPConnection("10.0.0.1", "username", port="22")
 
-        gzip = conn.check_gzip_to_skip("/root_dir/file.csv.gz")
+        gzip = conn.should_skip_gzip_file("/root_dir/file.csv.gz")
 
         self.assertEquals(gzip, False)
 
@@ -40,10 +40,10 @@ class TestEmptyCSVinGZ(unittest.TestCase):
         mocked_gzip.side_effect = OSError
         conn = client.SFTPConnection("10.0.0.1", "username", port="22")
 
-        gzip = conn.check_gzip_to_skip("/root_dir/file.csv.gz")
+        gzip = conn.should_skip_gzip_file("/root_dir/file.csv.gz")
 
         self.assertEquals(gzip, True)
-        mocked_logger.assert_called_with("Skipping %s file as it is not a gzipped file.", "/root_dir/file.csv.gz")
+        mocked_logger.assert_called_with("Skipping %s file because it is not a gzipped file.", "/root_dir/file.csv.gz")
 
     @mock.patch("gzip.GzipFile.read")
     def test_empty_file_PermissionDenied(self, mocked_gzip, mocked_logger, mocked_connect):
@@ -52,7 +52,7 @@ class TestEmptyCSVinGZ(unittest.TestCase):
         mocked_gzip.side_effect = PermissionError("Permission denied")
         conn = client.SFTPConnection("10.0.0.1", "username", port="22")
 
-        gzip = conn.check_gzip_to_skip("/root_dir/file.csv.gz")
+        gzip = conn.should_skip_gzip_file("/root_dir/file.csv.gz")
 
         self.assertEquals(gzip, True)
-        mocked_logger.assert_called_with("Skipping %s file as you do not have enough permissions.", "/root_dir/file.csv.gz")
+        mocked_logger.assert_called_with("Skipping %s file because you do not have enough permissions.", "/root_dir/file.csv.gz")
