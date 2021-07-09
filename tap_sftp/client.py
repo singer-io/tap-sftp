@@ -177,7 +177,7 @@ class SFTPConnection():
                 LOGGER.info("Skipping %s file because you do not have enough permissions.", f["filepath"])
             else:
                 LOGGER.info("Skipping %s file because it is unable to be read.", f["filepath"])
-            raise OSError
+            raise
 
     def get_files_matching_pattern(self, files, pattern):
         """ Takes a file dict {"filepath": "...", "last_modified": "..."} and a regex pattern string, and returns files matching that pattern. """
