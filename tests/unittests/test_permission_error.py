@@ -18,12 +18,8 @@ class TestPermissionError(unittest.TestCase):
 
         conn = client.SFTPConnection("10.0.0.1", "username", port="22")
 
-        try:
-            file_handle = conn.get_file_handle({"filepath": "/root_dir/file.csv.gz", "last_modified": "2020-01-01"})
-        except OSError:
-            # check if logger is called if logger is called in the function 
-            # then error has occurred otherwise not
-            self.assertEquals(0, mocked_logger.call_count)
+        file_handle = conn.get_file_handle({"filepath": "/root_dir/file.csv.gz", "last_modified": "2020-01-01"})
+        self.assertEquals(0, mocked_logger.call_count)
 
     def test_file_opening_error(self, mocked_logger, mocked_connect):
 
@@ -55,7 +51,7 @@ class TestPermissionError(unittest.TestCase):
 
     @mock.patch("tap_sftp.stats.add_file_data")
     @mock.patch("singer_encodings.csv.get_row_iterators")
-    def test_no_during_sync(self, mocked_get_row_iterators, mocked_stats, mocked_logger, mocked_connect):
+    def test_no_error_during_sync(self, mocked_get_row_iterators, mocked_stats, mocked_logger, mocked_connect):
         mocked_connect.side_effect = paramiko.SFTPClient
         mocked_get_row_iterators.return_value = []
         mocked_connect.open.side_effect = mock.mock_open()

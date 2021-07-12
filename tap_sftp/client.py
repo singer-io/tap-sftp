@@ -85,6 +85,7 @@ class SFTPConnection():
 
     def should_skip_gzip_file(self, filename):
         try:
+            # open the file and read it as GZIP file
             with self.sftp.open(filename, "rb") as file:
                 with gzip.GzipFile(fileobj=file, mode='rb') as gzip_file:
                     data = gzip_file.read()
