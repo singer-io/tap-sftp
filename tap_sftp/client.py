@@ -90,8 +90,8 @@ class SFTPConnection():
             with self.sftp.open(filename, "rb") as file:
                 with zipfile.ZipFile(file=file) as zip_file:
                     for name in zip_file.namelist():
-                        file = zip_file.open(name = name, mode = 'r')
-                        data = file.read()
+                        zipped_file = zip_file.open(name=name, mode='r')
+                        data = zipped_file.read()
                         if len(data) == 0:
                             LOGGER.info("Skipping %s file because it is empty.", filename + "/" +  name)
                             return False
