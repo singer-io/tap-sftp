@@ -8,6 +8,7 @@ import singer
 import stat
 import time
 import gzip
+import zipfile
 from datetime import datetime
 from paramiko.ssh_exception import AuthenticationException, SSHException
 
@@ -83,6 +84,24 @@ class SFTPConnection():
         matcher = re.compile(search_pattern)
         return [f for f in files if matcher.search(f["filepath"])]
 
+    def should_skip_zip_file(self, filename):
+        try:
+            # open the file and read it as ZIP file
+            with zipfile.ZipFile(filename) as gzip_file:
+                for name in gzip_file.namelist():
+                    file = gzip_file.open(name = name, mode = 'r')
+                    data = file.read()
+                    if len(data) == 0:
+                        LOGGER.info("Skipping %s file because it is empty.", filename + "/" +  name)
+                        return False
+            return False
+        except (zipfile.BadZipFile, OSError) as e:
+            if "Permission denied" in str(e):
+                LOGGER.info("Skipping %s file because you do not have enough permissions.", filename)
+                return True
+            LOGGER.info("Skipping %s file because it is not a zipped file.", filename)
+            return True
+
     def should_skip_gzip_file(self, filename):
         try:
             # open the file and read it as GZIP file
@@ -126,6 +145,9 @@ class SFTPConnection():
                 if is_empty(file_attr):
                     continue
 
+                # skip zip file if it is empty
+                if file_attr.filename.endswith('.zip') and self.should_skip_zip_file(prefix + '/' + file_attr.filename):
+                    continue
                 # skip gzip file if it is empty
                 if file_attr.filename.endswith('.gz') and self.should_skip_gzip_file(prefix + '/' + file_attr.filename):
                     continue
