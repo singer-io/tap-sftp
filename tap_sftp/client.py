@@ -87,13 +87,14 @@ class SFTPConnection():
     def should_skip_zip_file(self, filename):
         try:
             # open the file and read it as ZIP file
-            with zipfile.ZipFile(filename) as gzip_file:
-                for name in gzip_file.namelist():
-                    file = gzip_file.open(name = name, mode = 'r')
-                    data = file.read()
-                    if len(data) == 0:
-                        LOGGER.info("Skipping %s file because it is empty.", filename + "/" +  name)
-                        return False
+            with self.sftp.open(filename, "rb") as file:
+                with zipfile.ZipFile(file=file) as zip_file:
+                    for name in zip_file.namelist():
+                        file = zip_file.open(name = name, mode = 'r')
+                        data = file.read()
+                        if len(data) == 0:
+                            LOGGER.info("Skipping %s file because it is empty.", filename + "/" +  name)
+                            return False
             return False
         except (zipfile.BadZipFile, OSError) as e:
             if "Permission denied" in str(e):
