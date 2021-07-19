@@ -96,8 +96,7 @@ class SFTPConnection():
                         data = zipped_file.read()
                         if len(data) != 0:
                             skip_file = False
-                        else:
-                            LOGGER.warn("Skipping %s file because it is empty.", filename + "/" +  name)
+                            break
             return skip_file
         except (zipfile.BadZipFile, OSError) as e:
             if "Permission denied" in str(e):

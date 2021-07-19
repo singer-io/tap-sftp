@@ -38,7 +38,6 @@ class TestEmptyCSVinZIP(unittest.TestCase):
         gzip = conn.should_skip_zip_file("/root_dir/file.zip")
 
         self.assertEquals(gzip, True)
-        mocked_logger.assert_called_with("Skipping %s file because it is empty.", "/root_dir/file.zip/test.csv")
 
     def test_not_empty_zip_file(self, mocked_logger, mocked_zip, mocked_connect):
 
