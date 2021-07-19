@@ -5,7 +5,7 @@ import tap_sftp.client as client
 import paramiko
 
 @mock.patch("tap_sftp.client.SFTPConnection.sftp")
-@mock.patch("tap_sftp.client.LOGGER.info")
+@mock.patch("tap_sftp.client.LOGGER.warn")
 class TestEmptyCSVinGZ(unittest.TestCase):
 
     @mock.patch("gzip.GzipFile")

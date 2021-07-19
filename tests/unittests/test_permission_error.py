@@ -1,14 +1,11 @@
 import unittest
 from unittest import mock
-import gzip
-
-from paramiko import file
 import tap_sftp.client as client
 import tap_sftp.sync as sync
 import paramiko
 
 @mock.patch("tap_sftp.client.SFTPConnection.sftp")
-@mock.patch("tap_sftp.client.LOGGER.info")
+@mock.patch("tap_sftp.client.LOGGER.warn")
 class TestPermissionError(unittest.TestCase):
 
     def test_no_error(self, mocked_logger, mocked_connect):

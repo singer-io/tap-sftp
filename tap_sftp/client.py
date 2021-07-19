@@ -85,22 +85,25 @@ class SFTPConnection():
         return [f for f in files if matcher.search(f["filepath"])]
 
     def should_skip_zip_file(self, filename):
+        skip_file = True
         try:
             # open the file and read it as ZIP file
-            with self.sftp.open(filename, "rb") as file:
-                with zipfile.ZipFile(file=file) as zip_file:
+            with io.BytesIO() as f:
+                self.sftp.getfo(filename, f)
+                with zipfile.ZipFile(file=f) as zip_file:
                     for name in zip_file.namelist():
-                        zipped_file = zip_file.open(name=name, mode='r')
+                        zipped_file = zip_file.open(name=name)
                         data = zipped_file.read()
-                        if len(data) == 0:
-                            LOGGER.info("Skipping %s file because it is empty.", filename + "/" +  name)
-                            return False
-            return False
+                        if len(data) != 0:
+                            skip_file = False
+                        else:
+                            LOGGER.warn("Skipping %s file because it is empty.", filename + "/" +  name)
+            return skip_file
         except (zipfile.BadZipFile, OSError) as e:
             if "Permission denied" in str(e):
-                LOGGER.info("Skipping %s file because you do not have enough permissions.", filename)
+                LOGGER.warn("Skipping %s file because you do not have enough permissions.", filename)
                 return True
-            LOGGER.info("Skipping %s file because it is not a zipped file.", filename)
+            LOGGER.warn("Skipping %s file because it is not a zipped file.", filename)
             return True
 
     def should_skip_gzip_file(self, filename):
@@ -110,14 +113,14 @@ class SFTPConnection():
                 with gzip.GzipFile(fileobj=file, mode='rb') as gzip_file:
                     data = gzip_file.read()
                     if len(data) == 0:
-                        LOGGER.info("Skipping %s file because it is empty.", filename)
+                        LOGGER.warn("Skipping %s file because it is empty.", filename)
                         return True
             return False
         except OSError as e:
             if "Permission denied" in str(e):
-                LOGGER.info("Skipping %s file because you do not have enough permissions.", filename)
+                LOGGER.warn("Skipping %s file because you do not have enough permissions.", filename)
                 return True
-            LOGGER.info("Skipping %s file because it is not a gzipped file.", filename)
+            LOGGER.warn("Skipping %s file because it is not a gzipped file.", filename)
             return True
 
     def get_files_by_prefix(self, prefix):
@@ -144,13 +147,6 @@ class SFTPConnection():
                 files += self.get_files_by_prefix(prefix + '/' + file_attr.filename)
             else:
                 if is_empty(file_attr):
-                    continue
-
-                # skip zip file if it is empty
-                if file_attr.filename.endswith('.zip') and self.should_skip_zip_file(prefix + '/' + file_attr.filename):
-                    continue
-                # skip gzip file if it is empty
-                if file_attr.filename.endswith('.gz') and self.should_skip_gzip_file(prefix + '/' + file_attr.filename):
                     continue
 
                 last_modified = file_attr.st_mtime
@@ -183,11 +179,19 @@ class SFTPConnection():
         for f in matching_files:
             LOGGER.info("Found file: %s", f['filepath'])
 
+        filtered_files = []
+        for f in matching_files:
+            if f["filepath"].endswith(".zip") and self.should_skip_zip_file(f["filepath"]):
+                continue
+            if f["filepath"].endswith(".gz") and self.should_skip_gzip_file(f["filepath"]):
+                continue
+            filtered_files.append(f)
+
         if modified_since is not None:
-            matching_files = [f for f in matching_files if f["last_modified"] > modified_since]
+            filtered_files = [f for f in filtered_files if f["last_modified"] > modified_since]
 
         # sort files in increasing order of "last_modified"
-        sorted_files = sorted(matching_files, key = lambda x: (x['last_modified']).timestamp())
+        sorted_files = sorted(filtered_files, key = lambda x: (x['last_modified']).timestamp())
         return sorted_files
 
     def get_file_handle(self, f):
@@ -198,9 +202,9 @@ class SFTPConnection():
             return self.sftp.open(f["filepath"], 'rb')
         except OSError as e:
             if "Permission denied" in str(e):
-                LOGGER.info("Skipping %s file because you do not have enough permissions.", f["filepath"])
+                LOGGER.warn("Skipping %s file because you do not have enough permissions.", f["filepath"])
             else:
-                LOGGER.info("Skipping %s file because it is unable to be read.", f["filepath"])
+                LOGGER.warn("Skipping %s file because it is unable to be read.", f["filepath"])
             raise
 
     def get_files_matching_pattern(self, files, pattern):
