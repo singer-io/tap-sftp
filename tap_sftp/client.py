@@ -84,44 +84,6 @@ class SFTPConnection():
         matcher = re.compile(search_pattern)
         return [f for f in files if matcher.search(f["filepath"])]
 
-    def should_skip_zip_file(self, filename):
-        skip_file = True
-        try:
-            # open the file and read it as ZIP file
-            with io.BytesIO() as f:
-                self.sftp.getfo(filename, f)
-                with zipfile.ZipFile(file=f) as zip_file:
-                    for name in zip_file.namelist():
-                        zipped_file = zip_file.open(name=name)
-                        data = zipped_file.read()
-                        if len(data) != 0:
-                            skip_file = False
-                            break
-            return skip_file
-        except (zipfile.BadZipFile, OSError) as e:
-            if "Permission denied" in str(e):
-                LOGGER.warn("Skipping %s file because you do not have enough permissions.", filename)
-                return True
-            LOGGER.warn("Skipping %s file because it is not a zipped file.", filename)
-            return True
-
-    def should_skip_gzip_file(self, filename):
-        try:
-            # open the file and read it as GZIP file
-            with self.sftp.open(filename, "rb") as file:
-                with gzip.GzipFile(fileobj=file, mode='rb') as gzip_file:
-                    data = gzip_file.read()
-                    if len(data) == 0:
-                        LOGGER.warn("Skipping %s file because it is empty.", filename)
-                        return True
-            return False
-        except OSError as e:
-            if "Permission denied" in str(e):
-                LOGGER.warn("Skipping %s file because you do not have enough permissions.", filename)
-                return True
-            LOGGER.warn("Skipping %s file because it is not a gzipped file.", filename)
-            return True
-
     def get_files_by_prefix(self, prefix):
         """
         Accesses the underlying file system and gets all files that match "prefix", in this case, a directory path.
@@ -178,19 +140,11 @@ class SFTPConnection():
         for f in matching_files:
             LOGGER.info("Found file: %s", f['filepath'])
 
-        filtered_files = []
-        for f in matching_files:
-            if f["filepath"].endswith(".zip") and self.should_skip_zip_file(f["filepath"]):
-                continue
-            if f["filepath"].endswith(".gz") and self.should_skip_gzip_file(f["filepath"]):
-                continue
-            filtered_files.append(f)
-
         if modified_since is not None:
-            filtered_files = [f for f in filtered_files if f["last_modified"] > modified_since]
+            matching_files = [f for f in matching_files if f["last_modified"] > modified_since]
 
         # sort files in increasing order of "last_modified"
-        sorted_files = sorted(filtered_files, key = lambda x: (x['last_modified']).timestamp())
+        sorted_files = sorted(matching_files, key = lambda x: (x['last_modified']).timestamp())
         return sorted_files
 
     def get_file_handle(self, f):

@@ -79,7 +79,7 @@ class TestSFTPEmptyCSVInGZ(TestSFTPBase):
 
     def expected_pks(self):
         return {
-            'table': {'id'}
+            'table': {}
         }
 
     def expected_sync_row_counts(self):
@@ -100,7 +100,7 @@ class TestSFTPEmptyCSVInGZ(TestSFTPBase):
                     "delimiter": ",",
                     "search_prefix": os.getenv("TAP_SFTP_ROOT_DIR") + "/tap_tester",
                     "search_pattern": "table.*csv",
-                    "key_properties": ['id']
+                    "key_properties": []
                 }
             ])
         if original:
