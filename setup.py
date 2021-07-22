@@ -3,7 +3,7 @@ from setuptools import setup
 
 setup(
     name="tap-sftp",
-    version="1.0.2",
+    version="1.1.0",
     description="Singer.io tap for extracting data",
     author="Stitch",
     url="http://singer.io",
