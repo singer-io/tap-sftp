@@ -1,0 +1,128 @@
+from base import TestSFTPBase
+import tap_tester.connections as connections
+import tap_tester.menagerie   as menagerie
+import tap_tester.runner      as runner
+import os
+import csv
+import json
+import gzip
+import io
+
+RECORD_COUNT = {}
+
+class TestSFTPEmptyCSVInGZ(TestSFTPBase):
+
+    def name(self):
+        return "tap_tester_sftp_empty_csv_in_gz"
+
+    def get_files(self):
+        return [
+            {
+                # empty 'csv.gz' file as 'num_rows' is not given
+                "headers": [],
+                "directory": "test_csv_empty",
+                "files": ["table_1.csv.gz"]
+            },
+            {
+                "headers": ['id', 'string_col', 'integer_col'],
+                "directory": "test_csv_data",
+                "files": ["table_2.csv.gz"],
+                "num_rows": 50,
+                "generator": self.generate_simple_csv_lines_typeA
+            }
+        ]
+
+    def setUp(self):
+        if not all([x for x in [os.getenv('TAP_SFTP_USERNAME'),
+                                os.getenv('TAP_SFTP_PASSWORD'),
+                                os.getenv('TAP_SFTP_ROOT_DIR')]]):
+            #pylint: disable=line-too-long
+            raise Exception("set TAP_SFTP_USERNAME, TAP_SFTP_PASSWORD, TAP_SFTP_ROOT_DIR")
+
+        root_dir = os.getenv('TAP_SFTP_ROOT_DIR')
+
+        with self.get_test_connection() as client:
+            # drop all csv files in root dir
+            client.chdir(root_dir)
+            try:
+                TestSFTPEmptyCSVInGZ.rm('tap_tester', client)
+            except FileNotFoundError:
+                pass
+            client.mkdir('tap_tester')
+            client.chdir('tap_tester')
+
+            # Add subdirectories
+            file_info = self.get_files()
+            for entry in file_info:
+                client.mkdir(entry['directory'])
+
+            # Add csv files
+            for file_group in file_info:
+                headers = file_group['headers']
+                directory = file_group['directory']
+                for filename in file_group['files']:
+                    client.chdir(directory)
+                    with client.open(filename, 'w') as direct_file:
+                        with gzip.GzipFile(fileobj=direct_file, mode='w') as gzip_file:
+                            # write in file if 'num_rows', used to create an empty 'csv.gz' file
+                            if file_group.get('num_rows'):
+                                with io.TextIOWrapper(gzip_file, encoding='utf-8') as f:
+                                    writer = csv.writer(f)
+                                    lines = [headers] + file_group['generator'](file_group['num_rows'])
+                                    writer.writerows(lines)
+                    client.chdir('..')
+
+    def expected_check_streams(self):
+        return {
+            'table'
+        }
+
+    def expected_pks(self):
+        return {
+            'table': {}
+        }
+
+    def expected_sync_row_counts(self):
+        return {
+            'table': 50
+        }
+
+    def expected_first_sync_streams(self):
+        return {
+            'table'
+        }
+
+    def get_properties(self, original: bool = True):
+        props = self.get_common_properties()
+        props['tables'] = json.dumps([
+                {
+                    "table_name": "table",
+                    "delimiter": ",",
+                    "search_prefix": os.getenv("TAP_SFTP_ROOT_DIR") + "/tap_tester",
+                    "search_pattern": "table.*csv",
+                    "key_properties": []
+                }
+            ])
+        if original:
+            return props
+
+        props["start_date"] = self.START_DATE
+        return props
+
+    def test_run(self):
+        # sync
+        conn_id = connections.ensure_connection(self)
+
+        found_catalogs = self.run_and_verify_check_mode(conn_id)
+
+        self.perform_and_verify_table_and_field_selection(conn_id,found_catalogs)
+
+        record_count_by_stream = self.run_and_verify_sync(conn_id)
+
+        # checking if we got any data from sync
+        self.assertGreater(sum(record_count_by_stream.values()), 0)
+
+        # checking if data after sync is as expected
+        for tap_stream_id in self.expected_first_sync_streams():
+            self.assertEqual(self.expected_sync_row_counts()[tap_stream_id],
+                             record_count_by_stream[tap_stream_id])

@@ -7,6 +7,8 @@ import re
 import singer
 import stat
 import time
+import gzip
+import zipfile
 from datetime import datetime
 from paramiko.ssh_exception import AuthenticationException, SSHException
 
@@ -146,8 +148,17 @@ class SFTPConnection():
         return sorted_files
 
     def get_file_handle(self, f):
-        """ Takes a file dict {"filepath": "...", "last_modified": "..."} and returns a handle to the file. """
-        return self.sftp.open(f["filepath"], 'rb')
+        """ Takes a file dict {"filepath": "...", "last_modified": "..."}
+        -> returns a handle to the file.
+        -> raises error with appropriate logger message """
+        try:
+            return self.sftp.open(f["filepath"], 'rb')
+        except OSError as e:
+            if "Permission denied" in str(e):
+                LOGGER.warn("Skipping %s file because you do not have enough permissions.", f["filepath"])
+            else:
+                LOGGER.warn("Skipping %s file because it is unable to be read.", f["filepath"])
+            raise
 
     def get_files_matching_pattern(self, files, pattern):
         """ Takes a file dict {"filepath": "...", "last_modified": "..."} and a regex pattern string, and returns files matching that pattern. """
