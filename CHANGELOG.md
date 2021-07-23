@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.1.1
+  * Skip unreadable/permission denied files [#32](https://github.com/singer-io/tap-sftp/pull/32)
+
 ## 1.1.0
   * Bump singer-encodings version [#33](https://github.com/singer-io/tap-sftp/pull/33)
   * Increased tap-tester coverage  [#31](https://github.com/singer-io/tap-sftp/pull/31)
