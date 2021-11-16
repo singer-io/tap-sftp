@@ -1,4 +1,6 @@
 import json
+import socket
+import backoff
 import singer
 
 from singer_encodings import json_schema
@@ -15,11 +17,8 @@ def discover_streams(config):
 
     tables = json.loads(config['tables'])
     for table_spec in tables:
-        LOGGER.info('Sampling records to determine table JSON schema "%s".', table_spec['table_name'])
-        schema = json_schema.get_schema_for_table(conn, table_spec)
-        stream_md = metadata.get_standard_metadata(schema,
-                                                   key_properties=table_spec.get('key_properties'),
-                                                   replication_method='INCREMENTAL')
+        schema, stream_md = get_schema(conn, table_spec)
+
         streams.append(
             {
                 'stream': table_spec['table_name'],
@@ -30,3 +29,17 @@ def discover_streams(config):
         )
 
     return streams
+
+@backoff.on_exception(backoff.expo,
+                      (socket.timeout),
+                      max_tries=5,
+                      factor=2)
+# generate schema
+def get_schema(conn, table_spec):
+    LOGGER.info('Sampling records to determine table JSON schema "%s".', table_spec['table_name'])
+    schema = json_schema.get_schema_for_table(conn, table_spec)
+    stream_md = metadata.get_standard_metadata(schema,
+                                               key_properties=table_spec.get('key_properties'),
+                                               replication_method='INCREMENTAL')
+
+    return schema, stream_md

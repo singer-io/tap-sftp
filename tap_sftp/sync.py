@@ -1,4 +1,6 @@
 import json
+import socket
+import backoff
 import singer
 from singer import metadata, utils, Transformer
 from tap_sftp import client
@@ -44,6 +46,10 @@ def sync_stream(config, state, stream):
 
     return records_streamed
 
+@backoff.on_exception(backoff.expo,
+                      (socket.timeout),
+                      max_tries=5,
+                      factor=2)
 def sync_file(conn, f, stream, table_spec):
     LOGGER.info('Syncing file "%s".', f["filepath"])
 

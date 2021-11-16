@@ -1,5 +1,6 @@
 import io
 import os
+import socket
 import backoff
 import paramiko
 import pytz
@@ -12,10 +13,13 @@ import zipfile
 from datetime import datetime
 from paramiko.ssh_exception import AuthenticationException, SSHException
 
+# set default timeout to 300 seconds
+REQUEST_TIMEOUT = 300
+
 LOGGER = singer.get_logger()
 
 class SFTPConnection():
-    def __init__(self, host, username, password=None, private_key_file=None, port=None):
+    def __init__(self, host, username, password=None, private_key_file=None, port=None, timeout=None):
         self.host = host
         self.username = username
         self.password = password
@@ -25,6 +29,14 @@ class SFTPConnection():
         if private_key_file:
             key_path = os.path.expanduser(private_key_file)
             self.key = paramiko.RSAKey.from_private_key_file(key_path)
+
+        if timeout and float(timeout):
+            timeout_value = float(timeout)
+            # update the request timeout for the requests
+            self.request_timeout = timeout_value
+        else:
+            # set the default timeout of 300 seconds
+            self.request_timeout = REQUEST_TIMEOUT
 
     def handle_backoff(details):
         LOGGER.warn("SSH Connection closed unexpectedly. Waiting {wait} seconds and retrying...".format(**details))
@@ -51,6 +63,10 @@ class SFTPConnection():
                 self.transport.connect(username= self.username, password = self.password, hostkey = None, pkey = None)
                 self.sftp = paramiko.SFTPClient.from_transport(self.transport)
             self.__active_connection = True
+            # get 'socket'
+            socket = self.sftp.get_channel()
+            # set request timeout
+            socket.settimeout(self.request_timeout)
 
     @property
     def sftp(self):
@@ -75,6 +91,10 @@ class SFTPConnection():
 
     def close(self):
         if self.__active_connection:
+            # get socket
+            socket = self.sftp.get_channel()
+            # set request timeout to 'None' ie. default value
+            socket.settimeout(None)
             self.sftp.close()
             self.transport.close()
             self.__active_connection = False
@@ -84,6 +104,10 @@ class SFTPConnection():
         matcher = re.compile(search_pattern)
         return [f for f in files if matcher.search(f["filepath"])]
 
+    @backoff.on_exception(backoff.expo,
+                          (socket.timeout),
+                          max_tries=5,
+                          factor=2)
     def get_files_by_prefix(self, prefix):
         """
         Accesses the underlying file system and gets all files that match "prefix", in this case, a directory path.
@@ -170,4 +194,5 @@ def connection(config):
                           config['username'],
                           password=config.get('password'),
                           private_key_file=config.get('private_key_file'),
-                          port=config.get('port'))
+                          port=config.get('port'),
+                          timeout=config.get('request_timeout'))
