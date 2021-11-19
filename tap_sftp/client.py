@@ -32,7 +32,8 @@ class SFTPConnection():
 
         if timeout and float(timeout):
             timeout_value = float(timeout)
-            # update the request timeout for the requests
+            # set the request timeout for the requests
+            # if value is 0,"0", "" or None then it will set default to default to 300.0 seconds if not passed in config.
             self.request_timeout = timeout_value
         else:
             # set the default timeout of 300 seconds
@@ -104,10 +105,12 @@ class SFTPConnection():
         matcher = re.compile(search_pattern)
         return [f for f in files if matcher.search(f["filepath"])]
 
-    @backoff.on_exception(backoff.expo,
+    # backoff for 60 seconds as there is possibility the request will backoff again in 'discover.get_schema'
+    @backoff.on_exception(backoff.constant,
                           (socket.timeout),
-                          max_tries=5,
-                          factor=2)
+                          max_time=60,
+                          interval=10,
+                          jitter=None)
     def get_files_by_prefix(self, prefix):
         """
         Accesses the underlying file system and gets all files that match "prefix", in this case, a directory path.

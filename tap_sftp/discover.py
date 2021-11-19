@@ -30,10 +30,13 @@ def discover_streams(config):
 
     return streams
 
-@backoff.on_exception(backoff.expo,
+# backoff for 60 seconds as the request will again backoff again
+# in 'client.get_files_by_prefix' when 'Timeout' error occurs
+@backoff.on_exception(backoff.constant,
                       (socket.timeout),
-                      max_tries=5,
-                      factor=2)
+                      max_time=60,
+                      interval=10,
+                      jitter=None)
 # generate schema
 def get_schema(conn, table_spec):
     LOGGER.info('Sampling records to determine table JSON schema "%s".', table_spec['table_name'])

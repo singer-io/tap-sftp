@@ -1,3 +1,4 @@
+from datetime import datetime
 import socket
 import unittest
 from unittest import mock
@@ -114,24 +115,24 @@ class TimeoutBackoff(unittest.TestCase):
         Test case to verify the tap back off for 5 times for 'socket.timeout' error
     """
 
-    @mock.patch("time.sleep")
     @mock.patch("singer.metadata.get_standard_metadata")
     @mock.patch("singer_encodings.json_schema.get_schema_for_table")
-    def test_timeout_backoff__get_schema(self, mocked_get_schema_for_table, mocked_get_standard_metadata, mocked_sleep):
+    def test_timeout_backoff__get_schema(self, mocked_get_schema_for_table, mocked_get_standard_metadata):
         # mock 'get_schema_for_table' and raise 'socket.timeout' error
         mocked_get_schema_for_table.side_effect = socket.timeout
 
         table_spec = {
             "table_name": "test"
         }
-        try:
+        before_time = datetime.now()
+        with self.assertRaises(socket.timeout):
             # function call
             discover.get_schema("test_conn", table_spec)
-        except socket.timeout:
-            pass
+        after_time = datetime.now()
 
-        # verify that the tap backoff for 5 times
-        self.assertEquals(mocked_get_schema_for_table.call_count, 5)
+        # verify that the tap backoff for 60 seconds
+        time_difference = (after_time - before_time).total_seconds()
+        self.assertGreaterEqual(time_difference, 60)
 
     @mock.patch("time.sleep")
     @mock.patch("tap_sftp.client.SFTPConnection.get_file_handle")
@@ -159,18 +160,15 @@ class TimeoutBackoff(unittest.TestCase):
         }
         # create connection
         conn = client.connection(config=config)
-        try:
+        with self.assertRaises(socket.timeout):
             # function call
             sync.sync_file(conn=conn, f=file, stream="test_stream", table_spec=table_spec)
-        except socket.timeout:
-            pass
 
         # verify that the tap backoff for 5 times
         self.assertEquals(mocked_get_row_iterators.call_count, 5)
 
-    @mock.patch("time.sleep")
     @mock.patch("tap_sftp.client.SFTPConnection.sftp")
-    def test_timeout_backoff__get_files_by_prefix(self, mocked_sftp, mocked_sleep):
+    def test_timeout_backoff__get_files_by_prefix(self, mocked_sftp):
 
         # mock 'listdir_attr' and raise 'socket.timeout' error
         mocked_listdir_attr = mock.Mock()
@@ -186,11 +184,13 @@ class TimeoutBackoff(unittest.TestCase):
         }
         # create connection
         conn = client.connection(config=config)
-        try:
+
+        before_time = datetime.now()
+        with self.assertRaises(socket.timeout):
             # function call
             conn.get_files_by_prefix(".")
-        except socket.timeout:
-            pass
+        after_time = datetime.now()
 
-        # verify that the tap backoff for 5 times
-        self.assertEquals(mocked_sftp.listdir_attr.call_count, 5)
+        # verify that the tap backoff for 60 seconds
+        time_difference = (after_time - before_time).total_seconds()
+        self.assertGreaterEqual(time_difference, 60)
