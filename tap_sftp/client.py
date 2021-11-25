@@ -174,6 +174,10 @@ class SFTPConnection():
         sorted_files = sorted(matching_files, key = lambda x: (x['last_modified']).timestamp())
         return sorted_files
 
+    @backoff.on_exception(backoff.expo,
+                        (socket.timeout),
+                        max_tries=5,
+                        factor=2)
     def get_file_handle(self, f):
         """ Takes a file dict {"filepath": "...", "last_modified": "..."}
         -> returns a handle to the file.

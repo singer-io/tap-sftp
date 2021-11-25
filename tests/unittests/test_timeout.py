@@ -194,3 +194,29 @@ class TimeoutBackoff(unittest.TestCase):
         # verify that the tap backoff for 60 seconds
         time_difference = (after_time - before_time).total_seconds()
         self.assertGreaterEqual(time_difference, 60)
+
+    @mock.patch("time.sleep")
+    @mock.patch("tap_sftp.client.SFTPConnection.sftp")
+    def test_timeout_backoff__get_file_handle(self, mocked_sftp, mocked_sleep):
+
+        # mock 'open' and raise 'socket.timeout' error
+        mocked_open = mock.Mock()
+        mocked_open.side_effect = socket.timeout
+        mocked_sftp.open.side_effect = mocked_open
+
+        config = {
+            "host":"10.0.0.1",
+            "port":22,
+            "username":"username",
+            "password": "",
+            "start_date":"2020-01-01"
+        }
+        # create connection
+        conn = client.connection(config=config)
+
+        with self.assertRaises(socket.timeout):
+            # function call
+            conn.get_file_handle({"filepath": "/root/file.csv"})
+
+        # verify that the tap backoff for 5 times
+        self.assertEquals(mocked_sftp.open.call_count, 5)
