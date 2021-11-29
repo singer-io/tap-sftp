@@ -46,6 +46,7 @@ def sync_stream(config, state, stream):
 
     return records_streamed
 
+# retry 5 times for timeout error
 @backoff.on_exception(backoff.expo,
                       (socket.timeout),
                       max_tries=5,

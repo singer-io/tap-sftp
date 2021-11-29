@@ -31,10 +31,9 @@ class SFTPConnection():
             self.key = paramiko.RSAKey.from_private_key_file(key_path)
 
         if timeout and float(timeout):
-            timeout_value = float(timeout)
             # set the request timeout for the requests
             # if value is 0,"0", "" or None then it will set default to default to 300.0 seconds if not passed in config.
-            self.request_timeout = timeout_value
+            self.request_timeout = float(timeout)
         else:
             # set the default timeout of 300 seconds
             self.request_timeout = REQUEST_TIMEOUT
@@ -174,6 +173,7 @@ class SFTPConnection():
         sorted_files = sorted(matching_files, key = lambda x: (x['last_modified']).timestamp())
         return sorted_files
 
+    # retry 5 times for timeout error
     @backoff.on_exception(backoff.expo,
                         (socket.timeout),
                         max_tries=5,
