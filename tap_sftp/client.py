@@ -63,7 +63,7 @@ class SFTPConnection():
                 self.transport.connect(username= self.username, password = self.password, hostkey = None, pkey = None)
                 self.sftp = paramiko.SFTPClient.from_transport(self.transport)
             self.__active_connection = True
-            # get 'socket'
+            # get 'socket' to set the timeout
             socket = self.sftp.get_channel()
             # set request timeout
             socket.settimeout(self.request_timeout)
@@ -91,7 +91,7 @@ class SFTPConnection():
 
     def close(self):
         if self.__active_connection:
-            # get socket
+            # get 'socket' to set the timeout
             socket = self.sftp.get_channel()
             # set request timeout to 'None' ie. default value
             socket.settimeout(None)

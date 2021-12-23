@@ -6,10 +6,14 @@ from tap_sftp import client, discover, sync
 
 class TestTimeoutValue(unittest.TestCase):
     """
-        Test case to verify the timeout value is set as expected
+        Test cases to verify the timeout value is set as expected
     """
 
     def test_timeout_value_not_passed_in_config(self):
+        """
+            Test case to verify that the timeout value is 300 as
+            we have not passed 'request_timeout' in config
+        """
         # create config
         config = {
             "host":"10.0.0.1",
@@ -26,6 +30,10 @@ class TestTimeoutValue(unittest.TestCase):
         self.assertEquals(conn.request_timeout, 300)
 
     def test_timeout_int_value_passed_in_config(self):
+        """
+            Test case to verify that the timeout value is 100 as we
+            have passed 'request_timeout' in integer format in config
+        """
         # create config
         config = {
             "host":"10.0.0.1",
@@ -43,6 +51,10 @@ class TestTimeoutValue(unittest.TestCase):
         self.assertEquals(conn.request_timeout, 100.0)
 
     def test_timeout_string_value_passed_in_config(self):
+        """
+            Test case to verify that the timeout value is 100 as we
+            have passed 'request_timeout' in string format in config
+        """
         # create config
         config = {
             "host":"10.0.0.1",
@@ -60,6 +72,10 @@ class TestTimeoutValue(unittest.TestCase):
         self.assertEquals(conn.request_timeout, 100.0)
 
     def test_timeout_empty_value_passed_in_config(self):
+        """
+            Test case to verify that the timeout value is 300 as we
+            have passed empty value in 'request_timeout' in config
+        """
         # create config
         config = {
             "host":"10.0.0.1",
@@ -77,6 +93,10 @@ class TestTimeoutValue(unittest.TestCase):
         self.assertEquals(conn.request_timeout, 300)
 
     def test_timeout_0_value_passed_in_config(self):
+        """
+            Test case to verify that the timeout value is 300 as we
+            have passed 0 value in 'request_timeout' in config
+        """
         # create config
         config = {
             "host":"10.0.0.1",
@@ -94,6 +114,10 @@ class TestTimeoutValue(unittest.TestCase):
         self.assertEquals(conn.request_timeout, 300)
 
     def test_timeout_string_0_value_passed_in_config(self):
+        """
+            Test case to verify that the timeout value is 300 as we
+            have passed string 0 value in 'request_timeout' in config
+        """
         # create config
         config = {
             "host":"10.0.0.1",
@@ -112,12 +136,15 @@ class TestTimeoutValue(unittest.TestCase):
 
 class TimeoutBackoff(unittest.TestCase):
     """
-        Test case to verify the tap back off for 5 times for 'socket.timeout' error
+        Test cases to verify the tap back off for 5 times for 'socket.timeout' error
     """
 
     @mock.patch("singer.metadata.get_standard_metadata")
     @mock.patch("singer_encodings.json_schema.get_schema_for_table")
     def test_timeout_backoff__get_schema(self, mocked_get_schema_for_table, mocked_get_standard_metadata):
+        """
+            Test case to verify we backoff and retry for 'get_schema' function
+        """
         # mock 'get_schema_for_table' and raise 'socket.timeout' error
         mocked_get_schema_for_table.side_effect = socket.timeout
 
@@ -138,7 +165,9 @@ class TimeoutBackoff(unittest.TestCase):
     @mock.patch("tap_sftp.client.SFTPConnection.get_file_handle")
     @mock.patch("singer_encodings.csv.get_row_iterators")
     def test_timeout_backoff__sync_file(self, mocked_get_row_iterators, mocked_get_file_handle, mocked_sleep):
-
+        """
+            Test case to verify we backoff and retry for 'sync_file' function
+        """
         # mock 'get_row_iterators' and raise 'socket.timeout' error
         mocked_get_row_iterators.side_effect = socket.timeout
         # mock 'get_file_handle'
@@ -169,7 +198,9 @@ class TimeoutBackoff(unittest.TestCase):
 
     @mock.patch("tap_sftp.client.SFTPConnection.sftp")
     def test_timeout_backoff__get_files_by_prefix(self, mocked_sftp):
-
+        """
+            Test case to verify we backoff and retry for 'get_files_by_prefix' function
+        """
         # mock 'listdir_attr' and raise 'socket.timeout' error
         mocked_listdir_attr = mock.Mock()
         mocked_listdir_attr.side_effect = socket.timeout
@@ -198,7 +229,9 @@ class TimeoutBackoff(unittest.TestCase):
     @mock.patch("time.sleep")
     @mock.patch("tap_sftp.client.SFTPConnection.sftp")
     def test_timeout_backoff__get_file_handle(self, mocked_sftp, mocked_sleep):
-
+        """
+            Test case to verify we backoff and retry for 'get_file_handle' function
+        """
         # mock 'open' and raise 'socket.timeout' error
         mocked_open = mock.Mock()
         mocked_open.side_effect = socket.timeout
