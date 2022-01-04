@@ -39,6 +39,14 @@ class TestSFTPDelimiter(TestSFTPBase):
                 "num_rows": 50,
                 "generator": self.generate_simple_csv_lines_typeA
             },
+            {
+                "headers": ['id', 'string_col', 'integer_col'],
+                "directory": "folderD",
+                "delimiter": ";",
+                "files": ["table_4_fileA.csv"],
+                "num_rows": 50,
+                "generator": self.generate_simple_csv_lines_typeA
+            },
         ]
 
     def setUp(self):
