@@ -19,7 +19,7 @@ REQUEST_TIMEOUT = 300
 LOGGER = singer.get_logger()
 
 class SFTPConnection():
-    def __init__(self, host, username, password=None, private_key_file=None, port=None, timeout=None):
+    def __init__(self, host, username, password=None, private_key_file=None, port=None, timeout=REQUEST_TIMEOUT):
         self.host = host
         self.username = username
         self.password = password
