@@ -91,10 +91,6 @@ class SFTPConnection():
 
     def close(self):
         if self.__active_connection:
-            # get 'socket' to set the timeout
-            socket = self.sftp.get_channel()
-            # set request timeout to 'None' ie. default value
-            socket.settimeout(None)
             self.sftp.close()
             self.transport.close()
             self.__active_connection = False
