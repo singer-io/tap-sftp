@@ -56,7 +56,7 @@ class TestSFTPEmptyCSVInZIP(TestSFTPBase):
                 directory = "test_empty_zip"
                 client.chdir(directory)
                 with client.open(file_group['archive'], 'w') as direct_file:
-                    with zipfile.ZipFile(direct_file, mode='a') as zip_file:
+                    with zipfile.ZipFile(direct_file, mode='w') as zip_file:
                         total = ''
                         # write in file if 'num_rows', used to create an empty 'csv' file
                         if file_group.get('num_rows'):
