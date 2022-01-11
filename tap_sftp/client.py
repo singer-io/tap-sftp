@@ -1,5 +1,6 @@
 import io
 import os
+import socket
 import backoff
 import paramiko
 import pytz
@@ -12,10 +13,13 @@ import zipfile
 from datetime import datetime
 from paramiko.ssh_exception import AuthenticationException, SSHException
 
+# set default timeout to 300 seconds
+REQUEST_TIMEOUT = 300
+
 LOGGER = singer.get_logger()
 
 class SFTPConnection():
-    def __init__(self, host, username, password=None, private_key_file=None, port=None):
+    def __init__(self, host, username, password=None, private_key_file=None, port=None, timeout=REQUEST_TIMEOUT):
         self.host = host
         self.username = username
         self.password = password
@@ -25,6 +29,14 @@ class SFTPConnection():
         if private_key_file:
             key_path = os.path.expanduser(private_key_file)
             self.key = paramiko.RSAKey.from_private_key_file(key_path)
+
+        if timeout and float(timeout):
+            # set the request timeout for the requests
+            # if value is 0,"0", "" or None then it will set default to default to 300.0 seconds if not passed in config.
+            self.request_timeout = float(timeout)
+        else:
+            # set the default timeout of 300 seconds
+            self.request_timeout = REQUEST_TIMEOUT
 
     def handle_backoff(details):
         LOGGER.warn("SSH Connection closed unexpectedly. Waiting {wait} seconds and retrying...".format(**details))
@@ -51,6 +63,10 @@ class SFTPConnection():
                 self.transport.connect(username= self.username, password = self.password, hostkey = None, pkey = None)
                 self.sftp = paramiko.SFTPClient.from_transport(self.transport)
             self.__active_connection = True
+            # get 'socket' to set the timeout
+            socket = self.sftp.get_channel()
+            # set request timeout
+            socket.settimeout(self.request_timeout)
 
     @property
     def sftp(self):
@@ -84,6 +100,12 @@ class SFTPConnection():
         matcher = re.compile(search_pattern)
         return [f for f in files if matcher.search(f["filepath"])]
 
+    # backoff for 60 seconds as there is possibility the request will backoff again in 'discover.get_schema'
+    @backoff.on_exception(backoff.constant,
+                          (socket.timeout),
+                          max_time=60,
+                          interval=10,
+                          jitter=None)
     def get_files_by_prefix(self, prefix):
         """
         Accesses the underlying file system and gets all files that match "prefix", in this case, a directory path.
@@ -147,6 +169,11 @@ class SFTPConnection():
         sorted_files = sorted(matching_files, key = lambda x: (x['last_modified']).timestamp())
         return sorted_files
 
+    # retry 5 times for timeout error
+    @backoff.on_exception(backoff.expo,
+                        (socket.timeout),
+                        max_tries=5,
+                        factor=2)
     def get_file_handle(self, f):
         """ Takes a file dict {"filepath": "...", "last_modified": "..."}
         -> returns a handle to the file.
@@ -170,4 +197,5 @@ def connection(config):
                           config['username'],
                           password=config.get('password'),
                           private_key_file=config.get('private_key_file'),
-                          port=config.get('port'))
+                          port=config.get('port'),
+                          timeout=config.get('request_timeout'))

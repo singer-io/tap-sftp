@@ -71,7 +71,7 @@ class TestSFTPZip(TestSFTPBase):
                 directory = file_group['directory']
                 client.chdir(directory)
                 with client.open(file_group['archive'], 'w') as direct_file:
-                    with zipfile.ZipFile(direct_file, mode='a') as zip_file:
+                    with zipfile.ZipFile(direct_file, mode='w') as zip_file:
                         lines = [headers] + file_group['generator'](file_group['num_rows'])
                         total = ''
                         for line in lines:

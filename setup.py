@@ -21,6 +21,9 @@ setup(
             'ipdb',
             'pylint',
             'nose'
+        ],
+        'test': [
+            'paramiko==2.6.0'
         ]
     },
     entry_points="""
