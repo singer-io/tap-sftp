@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.1.2
+  * Request Timeout Implementation [#36](https://github.com/singer-io/tap-sftp/pull/36)
+
 ## 1.1.1
   * Skip unreadable/permission denied files [#32](https://github.com/singer-io/tap-sftp/pull/32)
 
