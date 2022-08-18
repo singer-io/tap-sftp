@@ -80,7 +80,8 @@ csv.get_row_iterators = get_row_iterators_local
 
 # Override the '_sdc_extra' column value as per the JSONL supported format
 json_schema.SDC_EXTRA_VALUE = {
-    'type': 'array', 'items': {
+    'type': 'array',
+    'items': {
         'anyOf': [
             {'type': 'object', 'properties': {}},
             {'type': 'string'}
