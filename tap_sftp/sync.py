@@ -67,6 +67,7 @@ def sync_file(conn, f, stream, table_spec):
     readers = csv.get_row_iterators(file_handle, options=opts, infer_compression=True)
 
     records_synced = 0
+    tap_added_fields =  ['_sdc_source_file', '_sdc_source_lineno', 'sdc_extra']
 
     for reader in readers:
         with Transformer() as transformer:
@@ -77,6 +78,22 @@ def sync_file(conn, f, stream, table_spec):
                     # index zero, +1 for header row
                     '_sdc_source_lineno': records_synced + 2
                 }
+
+                # For CSV files, the '_sdc_extra' is handled by 'restkey' in 'csv.DictReader'
+                # If the file is JSONL then prepare '_sdc_extra' column
+                if f['filepath'].split('.')[-1] == 'jsonl':
+                    sdc_extra = []
+
+                    # Get the extra fields ie. (json keys - fields from catalog - fields added by the tap)
+                    extra_fields = set(row.keys()) - set(stream.schema.to_dict().get('properties').keys() - tap_added_fields)
+
+                    # Prepare list of extra fields
+                    for extra_field in extra_fields:
+                        sdc_extra.append({extra_field: row.get(extra_field)})
+                    # If the record contains extra fields, then add '_sdc_extra' column
+                    if extra_fields:
+                        custom_columns['_sdc_extra'] = sdc_extra
+
                 rec = {**row, **custom_columns}
 
                 to_write = transformer.transform(rec, stream.schema.to_dict(), metadata.to_map(stream.metadata))
