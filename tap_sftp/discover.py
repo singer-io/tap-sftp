@@ -1,14 +1,36 @@
+import io
 import itertools
 import json
 import socket
 import backoff
 import singer
+import gzip
+import zipfile
 
 from singer_encodings import json_schema, csv, compression
 from singer import metadata
-from tap_sftp import client
+from tap_sftp import client, gzip_utils
 
 LOGGER= singer.get_logger()
+
+def compression_infer_local(iterable, file_name):
+    """Uses the incoming file_name and checks the end of the string for supported compression types"""
+    if not file_name:
+        raise Exception("Need file name")
+
+    if file_name.endswith('.tar.gz'):
+        raise NotImplementedError("tar.gz not supported")
+    elif file_name.endswith('.gz'):
+        file_bytes = iterable.read()
+        # Send file object and file name
+        yield [gzip.GzipFile(fileobj=io.BytesIO(file_bytes)), \
+            gzip_utils.get_file_name_from_gzfile(fileobj=io.BytesIO(file_bytes))]
+    elif file_name.endswith('.zip'):
+        with zipfile.ZipFile(iterable) as zip:
+            for name in zip.namelist():
+                yield zip.open(name)
+    else:
+        yield iterable
 
 def get_row_iterators_local(iterable, options={}, infer_compression=False):
     """Accepts an interable, options and a flag to infer compression and yields
@@ -24,14 +46,19 @@ def get_row_iterators_local(iterable, options={}, infer_compression=False):
             extension = item.name.split('.')[-1]
         # Get the extension of the gzipped file ie. file.csv.gz -> csv
         if extension == 'gz':
-            extension = file_name_splitted[-2]
+            # Get file name
+            gzip_file_name = item[1]
+            # Set iterator 'item'
+            item = item[0]
+            # Get file extension
+            extension = gzip_file_name.split('.')[-1]
 
-        # If the extension is 'csv' of 'txt', then use singer_encoding's 'get_row_iterator'
-        if extension in ['csv', 'txt']:
-            yield csv.get_row_iterator(item, options=options)
         # If the extension is JSONL then use 'get_JSONL_iterators'
-        elif extension == 'jsonl':
+        if extension == 'jsonl':
             yield get_JSONL_iterators(item, options)
+        # Assuming the extension is 'csv' of 'txt', then use singer_encoding's 'get_row_iterator'
+        else:
+            yield csv.get_row_iterator(item, options=options)
 
 def get_JSONL_iterators(iterator, options):
     # Get JSOL rows
@@ -67,16 +94,16 @@ def get_JSONL_rows(iterator):
         decoded_row = row.decode('utf-8')
         if decoded_row.strip():
             row = json.loads(decoded_row)
-            # Skipping the empty json.
-            if len(row) == 0:
-                continue
         else:
             continue
 
         yield row
 
-# Override singer_endoding's 'get_row_iterators' as per the the Tap's JSONL support
+# Override singer_encoding's 'get_row_iterators' as per the the Tap's JSONL support
 csv.get_row_iterators = get_row_iterators_local
+
+# Override singer_encoding's 'infer' as per the the Tap's JSONL support for GZIP files
+compression.infer = compression_infer_local
 
 # Override the '_sdc_extra' column value as per the JSONL supported format
 json_schema.SDC_EXTRA_VALUE = {
