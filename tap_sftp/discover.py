@@ -99,13 +99,13 @@ def get_JSONL_rows(iterator):
 
         yield row
 
-# Override singer_encoding's 'get_row_iterators' as per the the Tap's JSONL support
+# Override singer_encoding's 'get_row_iterators' as per the Tap's JSONL support
 csv.get_row_iterators = get_row_iterators_local
 
-# Override singer_encoding's 'infer' as per the the Tap's JSONL support for GZIP files
+# Override singer_encoding's 'infer' as per the Tap's JSONL support for GZIP files
 compression.infer = compression_infer_local
 
-# Override the '_sdc_extra' column value as per the JSONL supported format
+# Override the '_sdc_extra' column value as per the JSONL-supported format
 json_schema.SDC_EXTRA_VALUE = {
     'type': 'array',
     'items': {
