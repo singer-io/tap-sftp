@@ -153,8 +153,7 @@ class TestSFTPBase(unittest.TestCase):
         return {'start_date' : '2017-01-01T00:00:00Z',
                     'host' : os.getenv('TAP_SFTP_HOST'),
                     'port' : os.getenv('TAP_SFTP_PORT'),
-                    'username' : os.getenv('TAP_SFTP_USERNAME'),
-                    'private_key_file': None }
+                    'username' : os.getenv('TAP_SFTP_USERNAME')}
 
     def run_test(self):
         conn_id = connections.ensure_connection(self)
