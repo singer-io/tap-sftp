@@ -45,13 +45,13 @@ class TestSFTPZip(TestSFTPBase):
         if not all([x for x in [os.getenv('TAP_SFTP_USERNAME'),
                                 os.getenv('TAP_SFTP_PASSWORD'),
                                 os.getenv('TAP_SFTP_ROOT_DIR')]]):
-            #pylint: disable=line-too-long
+            # pylint: disable=line-too-long
             raise Exception("set TAP_SFTP_USERNAME, TAP_SFTP_PASSWORD, TAP_SFTP_ROOT_DIR")
 
         root_dir = os.getenv('TAP_SFTP_ROOT_DIR')
 
         with self.get_test_connection() as client:
-            # drop all csv files in root dir
+            # Drop all csv files in root dir
             client.chdir(root_dir)
             try:
                 TestSFTPZip.rm('tap_tester', client)
@@ -120,18 +120,18 @@ class TestSFTPZip(TestSFTPBase):
 
         conn_id = connections.ensure_connection(self)
 
-        # run in discovery mode
+        # Run in discovery mode
         check_job_name = runner.run_check_mode(self, conn_id)
 
-        # verify check  exit codes
+        # Verify check  exit codes
         exit_status = menagerie.get_exit_status(conn_id, check_job_name)
         menagerie.verify_check_exit_status(self, exit_status, check_job_name)
 
-        # verify the tap discovered the right streams
+        # Verify the tap discovered the right streams
         catalog = menagerie.get_catalogs(conn_id)
         found_catalog_names = set(map(lambda c: c['tap_stream_id'], catalog))
 
-        # assert we find the correct streams
+        # Assert we find the correct streams
         self.assertEqual(self.expected_check_streams(),
                          found_catalog_names)
 
@@ -143,7 +143,7 @@ class TestSFTPZip(TestSFTPBase):
                 main_metadata = schema_and_metadata["metadata"]
                 stream_metadata = [mdata for mdata in main_metadata if mdata["breadcrumb"] == []][0]
 
-                # table-key-properties metadata
+                # Table-key-properties metadata
                 self.assertEqual(self.expected_pks()[tap_stream_id],
                                  set(stream_metadata["metadata"]["table-key-properties"]))
 
@@ -161,10 +161,10 @@ class TestSFTPZip(TestSFTPBase):
         exit_status = menagerie.get_exit_status(conn_id, sync_job_name)
         menagerie.verify_sync_exit_status(self, exit_status, sync_job_name)
 
-        # verify the persisted schema was correct
+        # Verify the persisted schema was correct
         messages_by_stream = runner.get_records_from_target_output()
 
-        # assert that each of the streams that we synced are the ones that we expect to see
+        # Assert that each of the streams that we synced are the ones that we expect to see
         record_count_by_stream = runner.examine_target_output_file(self,
                                                                    conn_id,
                                                                    self.expected_first_sync_streams(),

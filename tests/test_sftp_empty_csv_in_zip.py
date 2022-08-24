@@ -32,13 +32,13 @@ class TestSFTPEmptyCSVInZIP(TestSFTPBase):
         if not all([x for x in [os.getenv('TAP_SFTP_USERNAME'),
                                 os.getenv('TAP_SFTP_PASSWORD'),
                                 os.getenv('TAP_SFTP_ROOT_DIR')]]):
-            #pylint: disable=line-too-long
+            # pylint: disable=line-too-long
             raise Exception("set TAP_SFTP_USERNAME, TAP_SFTP_PASSWORD, TAP_SFTP_ROOT_DIR")
 
         root_dir = os.getenv('TAP_SFTP_ROOT_DIR')
 
         with self.get_test_connection() as client:
-            # drop all csv files in root dir
+            # Drop all csv files in root dir
             client.chdir(root_dir)
             try:
                 TestSFTPEmptyCSVInZIP.rm('tap_tester', client)
@@ -58,7 +58,7 @@ class TestSFTPEmptyCSVInZIP(TestSFTPBase):
                 with client.open(file_group['archive'], 'w') as direct_file:
                     with zipfile.ZipFile(direct_file, mode='w') as zip_file:
                         total = ''
-                        # write in file if 'num_rows', used to create an empty 'csv' file
+                        # Write in file if 'num_rows', used to create an empty 'csv' file
                         if file_group.get('num_rows'):
                             lines = [headers] + file_group['generator'](file_group['num_rows'])
                             for line in lines:
@@ -107,7 +107,7 @@ class TestSFTPEmptyCSVInZIP(TestSFTPBase):
         return props
 
     def test_run(self):
-        # sync
+        # Sync
         conn_id = connections.ensure_connection(self)
 
         found_catalogs = self.run_and_verify_check_mode(conn_id)
@@ -116,10 +116,10 @@ class TestSFTPEmptyCSVInZIP(TestSFTPBase):
 
         record_count_by_stream = self.run_and_verify_sync(conn_id)
 
-        # checking if we got any data from sync
+        # Checking if we got any data from sync
         self.assertGreater(sum(record_count_by_stream.values()), 0)
 
-        # checking if data after sync is as expected
+        # Checking if data after sync is as expected
         for tap_stream_id in self.expected_first_sync_streams():
             self.assertEqual(self.expected_sync_row_counts()[tap_stream_id],
                              record_count_by_stream[tap_stream_id])

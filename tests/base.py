@@ -1,4 +1,4 @@
-import time
+import logging
 import tap_tester.connections as connections
 import tap_tester.menagerie   as menagerie
 import tap_tester.runner      as runner
@@ -153,7 +153,8 @@ class TestSFTPBase(unittest.TestCase):
         return {'start_date' : '2017-01-01T00:00:00Z',
                     'host' : os.getenv('TAP_SFTP_HOST'),
                     'port' : os.getenv('TAP_SFTP_PORT'),
-                    'username' : os.getenv('TAP_SFTP_USERNAME')}
+                    'username' : os.getenv('TAP_SFTP_USERNAME'),
+                    'private_key_file': None }
 
     def run_test(self):
         conn_id = connections.ensure_connection(self)
@@ -228,9 +229,9 @@ class TestSFTPBase(unittest.TestCase):
         self.assertGreater(len(found_catalogs), 0, msg="unable to locate schemas for connection {}".format(conn_id))
 
         found_catalog_names = set(map(lambda c: c['stream_name'], found_catalogs))
-        print(found_catalog_names)
+        logging.info(found_catalog_names)
         self.assertSetEqual(self.expected_check_streams(), found_catalog_names, msg="discovered schemas do not match")
-        print("discovered schemas are OK")
+        logging.info("discovered schemas are OK")
 
         return found_catalogs
 
@@ -254,7 +255,7 @@ class TestSFTPBase(unittest.TestCase):
             sum(sync_record_count.values()), 0,
             msg="failed to replicate any data: {}".format(sync_record_count)
         )
-        print("total replicated row count: {}".format(sum(sync_record_count.values())))
+        logging.info("total replicated row count: {}".format(sum(sync_record_count.values())))
 
         return sync_record_count
 
@@ -283,7 +284,7 @@ class TestSFTPBase(unittest.TestCase):
 
             # Verify all testable streams are selected
             selected = catalog_entry.get('annotated-schema').get('selected')
-            print("Validating selection on {}: {}".format(cat['stream_name'], selected))
+            logging.info("Validating selection on {}: {}".format(cat['stream_name'], selected))
             if cat['stream_name'] not in expected_selected:
                 self.assertFalse(selected, msg="Stream selected, but not testable.")
                 continue # Skip remaining assertions if we aren't selecting this stream
@@ -293,7 +294,7 @@ class TestSFTPBase(unittest.TestCase):
                 # Verify all fields within each selected stream are selected
                 for field, field_props in catalog_entry.get('annotated-schema').get('properties').items():
                     field_selected = field_props.get('selected')
-                    print("\tValidating selection on {}.{}: {}".format(
+                    logging.info("\tValidating selection on {}.{}: {}".format(
                         cat['stream_name'], field, field_selected))
                     self.assertTrue(field_selected, msg="Field not selected.")
             else:

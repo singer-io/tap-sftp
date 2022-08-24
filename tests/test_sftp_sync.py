@@ -42,13 +42,13 @@ class TestSFTPSync(TestSFTPBase):
         if not all([x for x in [os.getenv('TAP_SFTP_USERNAME'),
                                 os.getenv('TAP_SFTP_PASSWORD'),
                                 os.getenv('TAP_SFTP_ROOT_DIR')]]):
-            #pylint: disable=line-too-long
+            # pylint: disable=line-too-long
             raise Exception("set TAP_SFTP_USERNAME, TAP_SFTP_PASSWORD, TAP_SFTP_ROOT_DIR")
 
         root_dir = os.getenv('TAP_SFTP_ROOT_DIR')
 
         with self.get_test_connection() as client:
-            # drop all csv files in root dir
+            # Drop all csv files in root dir
             client.chdir(root_dir)
             try:
                 TestSFTPSync.rm('tap_tester', client)
@@ -123,7 +123,7 @@ class TestSFTPSync(TestSFTPBase):
 
     def test_run(self):
 
-        # sync 1
+        # Sync 1
         conn_id_1 = connections.ensure_connection(self)
 
         found_catalogs_1 = self.run_and_verify_check_mode(conn_id_1)
@@ -132,15 +132,15 @@ class TestSFTPSync(TestSFTPBase):
 
         record_count_by_stream_1 = self.run_and_verify_sync(conn_id_1)
 
-        # checking if we got any data from sync 1
+        # Checking if we got any data from sync 1
         self.assertGreater(sum(record_count_by_stream_1.values()), 0)
 
-        # checking if data after in 1st sync is as expected
+        # Checking if data after in 1st sync is as expected
         for tap_stream_id in self.expected_first_sync_streams():
             self.assertEqual(self.expected_first_sync_row_counts()[tap_stream_id],
                              record_count_by_stream_1[tap_stream_id])
 
-        # creating file "table_1_fileB"
+        # Creating file "table_1_fileB"
         with self.get_test_connection() as client:
             root_dir = os.getenv('TAP_SFTP_ROOT_DIR')
             client.chdir(root_dir + '/tap_tester/folderA')
@@ -151,10 +151,10 @@ class TestSFTPSync(TestSFTPBase):
                 lines = [file_group['headers']] + file_group['generator'](file_group['num_rows'])
                 writer.writerows(lines)
 
-        # adding some data to file "table_1_fileA" and "table_3_fileA"
+        # Adding some data to file "table_1_fileA" and "table_3_fileA"
         self.append_to_files()
 
-        # sync 2
+        # Sync 2
         conn_id_2 = connections.ensure_connection(self)
 
         found_catalogs_2 = self.run_and_verify_check_mode(conn_id_2)
@@ -163,11 +163,11 @@ class TestSFTPSync(TestSFTPBase):
 
         record_count_by_stream_2 = self.run_and_verify_sync(conn_id_2, second_sync = True)
 
-        # checking if we got any data from sync 2
+        # Checking if we got any data from sync 2
         self.assertGreater(sum(record_count_by_stream_2.values()), 0)
 
-        # checking if data after in 2nd sync is as expected
-        # here as we have not modified start date, so we should recieve all the data 
+        # Checking if data after in 2nd sync is as expected
+        # Here as we have not modified start date, so we should recieve all the data 
         # ie. before appending and after appending
         for tap_stream_id in self.expected_second_sync_streams():
             self.assertEqual(self.expected_second_sync_row_counts()[tap_stream_id],

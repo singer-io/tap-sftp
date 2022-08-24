@@ -44,13 +44,13 @@ class TestSFTPGzip(TestSFTPBase):
         if not all([x for x in [os.getenv('TAP_SFTP_USERNAME'),
                                 os.getenv('TAP_SFTP_PASSWORD'),
                                 os.getenv('TAP_SFTP_ROOT_DIR')]]):
-            #pylint: disable=line-too-long
+            # pylint: disable=line-too-long
             raise Exception("set TAP_SFTP_USERNAME, TAP_SFTP_PASSWORD, TAP_SFTP_ROOT_DIR")
 
         root_dir = os.getenv('TAP_SFTP_ROOT_DIR')
 
         with self.get_test_connection() as client:
-            # drop all csv files in root dir
+            # Drop all csv files in root dir
             client.chdir(root_dir)
             try:
                 TestSFTPGzip.rm('tap_tester', client)

@@ -1,18 +1,19 @@
-import logging
 from base import TestSFTPBase
+from functools import reduce
 import tap_tester.connections as connections
 import tap_tester.menagerie   as menagerie
 import tap_tester.runner      as runner
 import os
 import csv
 import json
+import logging
 
-class TestSFTPDiscovery(TestSFTPBase):
-
+class TestSFTPDatatype(TestSFTPBase):    
     def name(self):
-        return "tap_tester_sftp_discovery"
+            return "tap_tester_sftp_Datatype"
 
     def get_files(self):
+        """Generate files for the test"""
         return [
             {
                 "headers": ['id', 'string_col', 'integer_col'],
@@ -38,19 +39,20 @@ class TestSFTPDiscovery(TestSFTPBase):
         ]
 
     def setUp(self):
+        """Setup the directory for test """
         if not all([x for x in [os.getenv('TAP_SFTP_USERNAME'),
                                 os.getenv('TAP_SFTP_PASSWORD'),
                                 os.getenv('TAP_SFTP_ROOT_DIR')]]):
-            #pylint: disable=line-too-long
+            # pylint: disable=line-too-long
             raise Exception("set TAP_SFTP_USERNAME, TAP_SFTP_PASSWORD, TAP_SFTP_ROOT_DIR")
 
         root_dir = os.getenv('TAP_SFTP_ROOT_DIR')
 
         with self.get_test_connection() as client:
-            # drop all csv files in root dir
+            # Drop all csv files in root dir
             client.chdir(root_dir)
             try:
-                TestSFTPDiscovery.rm('tap_tester', client)
+                TestSFTPDatatype.rm('tap_tester', client)
             except FileNotFoundError:
                 pass
             client.mkdir('tap_tester')
@@ -75,6 +77,7 @@ class TestSFTPDiscovery(TestSFTPBase):
                     client.chdir('..')
 
     def get_properties(self):
+        """Get table properties"""
         props = self.get_common_properties()
         props['tables'] = json.dumps([
                 {
@@ -102,83 +105,108 @@ class TestSFTPDiscovery(TestSFTPBase):
                 }
             ])
         return props
+    
+    def expected_sync_streams(self):
+        """Expected sync streams"""
+        return {
+            'table_1',
+            'table_2',
+            'table_3',
+        }
+    def expected_check_streams(self):
+        """Expected check streams"""
+        return {
+            'table_1',
+            'table_2',
+            'table_3',
+        }
+    def expected_pks(self):
+        """Expected primary keys"""
+        return {
+            'table_1': {"id"},
+            'table_2': {"id"},
+            'table_3': {"id"},
+        }
 
-    def test_run(self):
+    def expected_sync_row_counts(self):
+        """Expected row count"""
+        return {
+            'table_1': 100,
+            'table_2': 150,
+            'table_3': 150
+        }
+
+    def test_discovery_run(self):
         conn_id = connections.ensure_connection(self)
-
-        # run in check mode
+        # Run in discovery mode
         check_job_name = runner.run_check_mode(self, conn_id)
 
-        # check exit codes
+        # Verify check exit codes
         exit_status = menagerie.get_exit_status(conn_id, check_job_name)
         menagerie.verify_check_exit_status(self, exit_status, check_job_name)
 
-        # tap discovered the right streams
-        catalog = menagerie.get_catalogs(conn_id)
-        found_catalog_names = set(map(lambda c: c['tap_stream_id'], catalog))
+        # Verify the tap discovered the right streams
+        found_catalogs = menagerie.get_catalogs(conn_id)
 
-        # assert we find the correct streams
+        # Assert we find the correct streams
         self.assertEqual(self.expected_check_streams(),
-                         found_catalog_names)
-
+                         {c['tap_stream_id'] for c in found_catalogs})
+        
         for tap_stream_id in self.expected_check_streams():
-            with self.subTest(stream=tap_stream_id):
-                found_stream = [c for c in catalog if c['tap_stream_id'] == tap_stream_id][0]
+            found_stream = [c for c in found_catalogs if c['tap_stream_id'] == tap_stream_id][0]
 
-                expected_primary_keys = self.expected_pks()[tap_stream_id]
+            # Assert that the pks are correct
+            self.assertEqual(self.expected_pks()[found_stream['stream_name']],
+                             set(found_stream.get('metadata', {})[0].get('metadata', {}).get('table-key-properties')))
 
-                schema_and_metadata = menagerie.get_annotated_schema(conn_id, found_stream['stream_id'])
-                main_metadata = schema_and_metadata["metadata"]
-                stream_metadata = [mdata for mdata in main_metadata if mdata["breadcrumb"] == []][0]
-                actual_primary_keys = set(stream_metadata.get("metadata", {"table-key-properties": []}).get("table-key-properties", []))
-                automatic_fields = [mdata["breadcrumb"][1]
-                                    for mdata in main_metadata
-                                    if mdata["metadata"]["inclusion"] == "automatic"]
+    def test_run_sync_mode(self):
+        conn_id = connections.ensure_connection(self)
+        
+        # Select our catalogs
+        our_catalogs = self.run_and_verify_check_mode(conn_id)
+        self.perform_and_verify_table_and_field_selection(conn_id, our_catalogs, True)
 
-                # table-key-properties metadata
-                self.assertEqual(self.expected_pks()[tap_stream_id],
-                                 set(stream_metadata["metadata"]["table-key-properties"]))
+        # Clear state before our run
+        menagerie.set_state(conn_id, {})
 
-                # replication method check
-                self.assertEqual('INCREMENTAL',
-                                 stream_metadata["metadata"]['forced-replication-method'])
+        # Run a sync job using orchestrator
+        self.run_and_verify_sync(conn_id)
 
-                # check if all columns are present or not
-                self.assertTrue(
-                    set(
-                        self.expected_columns()[tap_stream_id]
-                    ).issubset(
-                        set(
-                            schema_and_metadata['annotated-schema']['properties'].keys()
-                        )
-                    )
+        # Verify actual rows were synced
+        record_count_by_stream = runner.examine_target_output_file(
+            self,
+            conn_id,
+            self.expected_check_streams(),
+            self.expected_pks())
+        replicated_row_count = reduce(lambda accum, c : accum + c, record_count_by_stream.values())
+
+        for stream in self.expected_check_streams():
+            with self.subTest(stream=stream):
+                self.assertEqual(
+                    record_count_by_stream.get(stream, 0),
+                    self.expected_sync_row_counts()[stream],
+                    msg="actual rows: {}, expected_rows: {} for stream {} don't match".format(
+                        record_count_by_stream.get(stream, 0),
+                        self.expected_sync_row_counts()[stream],
+                        stream)
                 )
 
-                # check if only primary key is "automatic"
-                self.assertEqual(self.expected_pks()[tap_stream_id],
-                                 set(automatic_fields))
+        logging.info("total replicated row count: {}".format(replicated_row_count))
+    
+    def test_primary_keys(self):
+        conn_id = connections.ensure_connection(self)
+        found_catalogs = self.run_and_verify_check_mode(conn_id)
+        all_catalogs = [x for x in found_catalogs]
+        for catalog in all_catalogs:
+            with self.subTest(c=catalog):
+                expected_key_properties = \
+                    self.expected_pks()[catalog["stream_name"]]
+                metadata_and_annotated_schema = menagerie.get_annotated_schema(
+                    conn_id, catalog['stream_id'])
 
-                # check all other fields are "available"
-                self.assertTrue(
-                        all({available_items["metadata"]["inclusion"] == "available"
-                             for available_items in main_metadata
-                             if available_items.get("breadcrumb", []) != []
-                             and available_items.get("breadcrumb", ["properties", None])[1]
-                             not in automatic_fields}),
-                        msg="Not all non key properties are set to available in metadata")
-
-                # Verify primary key(s) match expectations
-                self.assertSetEqual(expected_primary_keys, actual_primary_keys)
-
-                # Verify there is only 1 top level breadcrumb
-                stream_properties = [item for item in main_metadata if item.get("breadcrumb") == []]
-                self.assertTrue(len(stream_properties) == 1,
-                                msg="There is more than one top level breadcrumb")
-
-                actual_fields = []
-                for md_entry in main_metadata:
-                    if md_entry['breadcrumb'] != []:
-                        actual_fields.append(md_entry['breadcrumb'][1])
-
-                # Verify there are no duplicate metadata entries
-                self.assertEqual(len(actual_fields), len(set(actual_fields)), msg = "duplicates in the metadata entries retrieved")
+                # Verify that expected_key_properties show as automatic in metadata
+                metadata = metadata_and_annotated_schema["metadata"]
+                actual_key_properties = {item.get("breadcrumb", ["", ""])[1]
+                                         for item in metadata
+                                         if item.get("metadata").get("inclusion") == "automatic"}
+                self.assertEqual(actual_key_properties, expected_key_properties)
