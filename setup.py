@@ -10,10 +10,10 @@ setup(
     classifiers=["Programming Language :: Python :: 3 :: Only"],
     py_modules=["tap_sftp"],
     install_requires=[
-        "singer-python==5.12.1",
-        'paramiko==2.6.0',
+        "singer-python==5.12.2",
+        'paramiko==2.11.0',
         'backoff==1.8.0',
-        'singer-encodings==0.1.1',
+        'singer-encodings==0.1.2',
         'terminaltables==3.1.0',
     ],
     extras_require={
@@ -23,7 +23,7 @@ setup(
             'nose'
         ],
         'test': [
-            'paramiko==2.6.0'
+            'paramiko==2.11.0'
         ]
     },
     entry_points="""
