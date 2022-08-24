@@ -6,8 +6,8 @@ import singer
 
 class TestSyncJSONLsdcFields(unittest.TestCase):
     @parameterized.expand([
-        ["with_sdc_fields", [{"id": 1}], {'id': 1, '_sdc_source_file': '/root_dir/data.jsonl', '_sdc_source_lineno': 2}],
-        ["with_sdc_extra", [{"id": 1, "name": "abc"}], {'id': 1, 'name': 'abc', '_sdc_source_file': '/root_dir/data.jsonl', '_sdc_source_lineno': 2, '_sdc_extra': [{"name": "abc"}]}]
+        ["with_sdc_fields", [[{"id": 1}]], {'id': 1, '_sdc_source_file': '/root_dir/data.jsonl', '_sdc_source_lineno': 2}],
+        ["with_sdc_extra", [[{"id": 1, "name": "abc"}]], {'id': 1, 'name': 'abc', '_sdc_source_file': '/root_dir/data.jsonl', '_sdc_source_lineno': 2, '_sdc_extra': [{"name": "abc"}]}]
     ])
     @mock.patch("tap_sftp.client.SFTPConnection.sftp")
     @mock.patch('singer.Transformer.transform')
