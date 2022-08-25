@@ -34,8 +34,8 @@ class TestCheckJSONLKeyProperties(unittest.TestCase):
         )
 
     @parameterized.expand([
-        ["raise_key_properties_error", '{"name": "abc", "updated_at": "2022-01-01"}', "CSV file missing required headers: {\'id\'}"],
-        ["raise_date_overrides_error", '{"id": 1, "name": "abc"}', "CSV file missing date_overrides headers: {\'updated_at\'}"]
+        ["raise_key_properties_error", '{"name": "abc", "updated_at": "2022-01-01"}', "JSONL file missing required headers: {\'id\'}"],
+        ["raise_date_overrides_error", '{"id": 1, "name": "abc"}', "JSONL file missing date_overrides headers: {\'updated_at\'}"]
     ])
     def test_get_JSONL_iterators(self, name, test_data, expected_data):
         options = {

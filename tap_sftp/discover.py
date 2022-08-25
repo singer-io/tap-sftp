@@ -143,13 +143,13 @@ def check_key_properties_and_date_overrides_for_jsonl_file(options, jsonl_sample
     if options.get('key_properties'):
         key_properties = set(options['key_properties'])
         if not key_properties.issubset(all_keys):
-            raise Exception('CSV file missing required headers: {}'
+            raise Exception('JSONL file missing required headers: {}'
                             .format(key_properties - all_keys))
 
     if options.get('date_overrides'):
         date_overrides = set(options['date_overrides'])
         if not date_overrides.issubset(all_keys):
-            raise Exception('CSV file missing date_overrides headers: {}'
+            raise Exception('JSONL file missing date_overrides headers: {}'
                             .format(date_overrides - all_keys))
 
 def get_JSONL_rows(iterator):
