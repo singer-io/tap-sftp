@@ -85,7 +85,7 @@ def sync_file(conn, f, stream, table_spec):
                     sdc_extra = []
 
                     # Get the extra fields ie. (json keys - fields from catalog - fields added by the tap)
-                    extra_fields = set(row.keys()) - set(stream.schema.to_dict().get('properties').keys() - tap_added_fields)
+                    extra_fields = set(row.keys()) - set(stream.schema.to_dict().get('properties', {}).keys() - tap_added_fields)
 
                     # Prepare list of extra fields
                     for extra_field in extra_fields:
