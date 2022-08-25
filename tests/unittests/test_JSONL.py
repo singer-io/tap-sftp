@@ -61,10 +61,12 @@ class TestRowIterators(unittest.TestCase):
         ["zip_jsonl", ["test.zip", [Iterable("", "test.jsonl")]], [0, 1]],
         ["gz_csv", ["test.gz", [[Iterable(""), "test.csv"]]], [1, 0]],
         ["gz_jsonl", ["test.gz", [[Iterable(""), "test.jsonl"]]], [0, 1]],
+        ["gz_csv_no_name", ["test.gz", [[Iterable(""), None]]], [0, 0]],
+        ["gz_jsonl_no_name", ["test.gz", [[Iterable(""), None]]], [0, 0]],
     ])
     @mock.patch("tap_sftp.discover.get_JSONL_iterators")
     @mock.patch("singer_encodings.csv.get_row_iterator")
-    @mock.patch("singer_encodings.compression.infer")
+    @mock.patch("tap_sftp.discover.compression_infer_local")
     def test_get_row_iterators_local(self, name, test_data, expected_data, mocked_infer, mocked_get_csv_row_iterator, mocked_get_JSONL_iterators):
         # Mock file iterable
         mocked_infer.return_value = test_data[1]

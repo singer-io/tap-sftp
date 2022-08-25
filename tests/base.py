@@ -32,6 +32,10 @@ class TestSFTPBase(unittest.TestCase):
     def random_string_generator(self, size=6, chars=string.ascii_uppercase + string.digits):
         return ''.join(random.choice(chars) for x in range(size))
 
+    def generate_max_size_csv(self):
+        """Generate field with max size"""
+        return [[1, 'a'*131074]]
+
     def generate_simple_csv_lines_typeA(self, num_lines):
         lines = []
         for int_value in range(num_lines):
