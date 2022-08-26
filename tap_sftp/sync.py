@@ -68,6 +68,7 @@ def sync_file(conn, f, stream, table_spec):
 
     records_synced = 0
     tap_added_fields =  ['_sdc_source_file', '_sdc_source_lineno', 'sdc_extra']
+    schema_dict = stream.schema.to_dict()
 
     for reader in readers:
         with Transformer() as transformer:
@@ -85,7 +86,10 @@ def sync_file(conn, f, stream, table_spec):
                     sdc_extra = []
 
                     # Get the extra fields ie. (json keys - fields from catalog - fields added by the tap)
-                    extra_fields = set(row.keys()) - set(stream.schema.to_dict().get('properties', {}).keys() - tap_added_fields)
+                    extra_fields = set()
+                    # Create '_sdc_extra' fields if the schema is not empty
+                    if schema_dict:
+                        extra_fields = set(row.keys()) - set(schema_dict.get('properties', {}).keys() - tap_added_fields)
 
                     # Prepare list of extra fields
                     for extra_field in extra_fields:
@@ -96,7 +100,7 @@ def sync_file(conn, f, stream, table_spec):
 
                 rec = {**row, **custom_columns}
 
-                to_write = transformer.transform(rec, stream.schema.to_dict(), metadata.to_map(stream.metadata))
+                to_write = transformer.transform(rec, schema_dict, metadata.to_map(stream.metadata))
 
                 singer.write_record(stream.tap_stream_id, to_write)
                 records_synced += 1
