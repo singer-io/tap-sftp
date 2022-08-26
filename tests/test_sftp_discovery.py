@@ -169,7 +169,7 @@ class TestSFTPDiscovery(TestSFTPBase):
 
                 # Verify primary key(s) match expectations
                 self.assertSetEqual(expected_primary_keys, actual_primary_keys)
-
+                
                 # Verify there is only 1 top level breadcrumb
                 stream_properties = [item for item in main_metadata if item.get("breadcrumb") == []]
                 self.assertTrue(len(stream_properties) == 1,

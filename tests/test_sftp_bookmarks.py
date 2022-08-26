@@ -1,12 +1,9 @@
-import logging
 from base import TestSFTPBase
-import tap_tester.connections as connections
-import tap_tester.menagerie   as menagerie
-import tap_tester.runner      as runner
 from functools import reduce
 import os
 import csv
 import json
+from tap_tester import connections, menagerie, runner, LOGGER
 
 class TestSFTPBookmark(TestSFTPBase):
 
@@ -138,7 +135,7 @@ class TestSFTPBookmark(TestSFTPBase):
         record_count_by_stream = runner.examine_target_output_file(self, conn_id, self.expected_sync_streams(), self.expected_pks())
         replicated_row_count =  reduce(lambda accum,c : accum + c, record_count_by_stream.values())
         self.assertGreater(replicated_row_count, 0, msg="failed to replicate any data: {}".format(record_count_by_stream))
-        logging.info("total replicated row count: {}".format(replicated_row_count))
+        LOGGER.info("total replicated row count: {}".format(replicated_row_count))
 
         # Creating file "table_1_fileB"
         with self.get_test_connection() as client:
@@ -170,5 +167,3 @@ class TestSFTPBookmark(TestSFTPBase):
         records = runner.get_records_from_target_output()
         messages = records.get('table_1', {}).get('messages', [])
         self.assertEqual(len(messages), 0, msg="Sync'd incorrect count of messages: {}".format(len(messages)))
-
-

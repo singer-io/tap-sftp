@@ -1,12 +1,10 @@
 from base import TestSFTPBase
 from functools import reduce
-import tap_tester.connections as connections
-import tap_tester.menagerie   as menagerie
-import tap_tester.runner      as runner
 import os
 import csv
 import json
-import logging
+from tap_tester import connections, menagerie, runner, LOGGER
+
 
 class TestSFTPDatatype(TestSFTPBase):    
     def name(self):
@@ -191,7 +189,7 @@ class TestSFTPDatatype(TestSFTPBase):
                         stream)
                 )
 
-        logging.info("total replicated row count: {}".format(replicated_row_count))
+        LOGGER.info("total replicated row count: {}".format(replicated_row_count))
     
     def test_primary_keys(self):
         conn_id = connections.ensure_connection(self)
