@@ -10,7 +10,7 @@ import zipfile
 import csv as python_csv
 from singer_encodings import json_schema, csv
 from singer import metadata
-from tap_sftp import client, gzip_utils
+from tap_sftp import client, gzip_utils, schema
 
 LOGGER= singer.get_logger()
 
@@ -98,18 +98,18 @@ def get_row_iterators_local(iterable, options={}, infer_compression=False):
 
     for item in compressed_iterables:
         file_name_splitted = options.get('file_name').split('.')
-        extension = file_name_splitted[-1]
+        extension = file_name_splitted[-1].lower()
         # Get the extension of the zipped file
         if extension == 'zip':
-            extension = item.name.split('.')[-1]
+            extension = item.name.split('.')[-1].lower()
         # Get the extension of the gzipped file ie. file.csv.gz -> csv
-        if extension == 'gz':
+        elif extension == 'gz':
             # Get file name
             gzip_file_name = item[1]
             # Set iterator 'item'
             item = item[0]
             # Get file extension
-            extension = gzip_file_name.split('.')[-1] if gzip_file_name else gzip_file_name
+            extension = gzip_file_name.split('.')[-1].lower() if gzip_file_name else gzip_file_name
 
         # For GZ files, if the file is gzipped with --no-name, then
         # the 'extension' will be 'None'. Hence, send an empty list
@@ -168,6 +168,9 @@ csv.get_row_iterators = get_row_iterators_local
 
 # Override singer_encoding's 'sample_file' as per the Tap's JSONL support
 json_schema.sample_file = sample_file_local
+
+# Override singer_encoding's 'generate_schema' as the Tap's JSONL support
+json_schema.generate_schema = schema.generate_schema
 
 # Override the '_sdc_extra' column value as per the JSONL-supported format
 json_schema.SDC_EXTRA_VALUE = {
