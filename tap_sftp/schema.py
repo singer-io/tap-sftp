@@ -22,7 +22,7 @@ def generate_schema(samples, table_spec):
         elif datatype == 'list':
             counts[key] = {
                 'anyOf': [
-                    {'type': 'array', 'items': {'type': ['null', 'string']}}, # NOTE: Wrong? type: null, string
+                    {'type': 'array', 'items': {'type': ['null', 'string']}},
                     {'type': ['null', 'string']}
                 ]
             }
@@ -60,8 +60,8 @@ def pick_datatype(counts):
     """Function to get the datatype from the counts"""
     # Default return
     to_return = 'string'
-    list_of_datatypes = ['list.date-time', 'list.dict', 'list.integer',
-                         'list.number', 'list.string', 'list', 'date-time', 'dict']
+    list_of_datatypes = ['list.date-time', 'list.dict', 'list.number',
+                         'list.integer', 'list.string', 'list', 'date-time', 'dict']
 
     for data_types in list_of_datatypes:
         if counts.get(data_types, 0) > 0:
@@ -119,16 +119,19 @@ def infer(key, datum, date_overrides, second_call=False):
         if isinstance(datum, dict):
             return 'dict'
 
-        # NOTE: Only float? Data loss: 1.99 -> 1
         try:
-            int(datum)
+            # Convert the data into the string before integer conversion
+            # As for CSV, all the data will be replicated into the string as a result, int("1.1") will result into ValueError
+            # Whereas for JSONL, all the data will be replicated into original form thus, int(1.1) will not raise any error.
+            # Hence, wrong datatype will be assigned
+            int(str(datum))
             return 'integer'
         except (ValueError, TypeError):
             pass
 
         try:
             # numbers are NOT floats, they are DECIMALS
-            float(datum)
+            float(str(datum))
             return 'number'
         except (ValueError, TypeError):
             pass
