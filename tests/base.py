@@ -58,6 +58,28 @@ class TestSFTPBase(unittest.TestCase):
             lines.append([int_value, self.random_string_generator(), int_value*5, utils.strftime(start_datetime), int_value + random.random()])
         return lines
 
+    def generate_simple_jsonl_lines_typeA(self, num_lines):
+        lines = []
+        for int_value in range(num_lines):
+            lines.append({"id": int_value, "string_col": self.random_string_generator(), "integer_col": int_value*5})
+        return lines
+
+    def generate_simple_jsonl_lines_typeB(self, num_lines):
+        lines = []
+        start_datetime = datetime(2018, 1, 1, 19, 29, 14, 578000, tzinfo=timezone.utc)
+        for int_value in range(num_lines):
+            start_datetime = start_datetime + timedelta(days=5)
+            lines.append({"id": int_value, "string_col": self.random_string_generator(), "datetime_col": utils.strftime(start_datetime), "number_col": int_value + random.random()})
+        return lines
+
+    def generate_simple_jsonl_lines_typeC(self, num_lines):
+        lines = []
+        start_datetime = datetime(2018, 1, 1, 19, 29, 14, 578000, tzinfo=timezone.utc)
+        for int_value in range(num_lines):
+            start_datetime = start_datetime + timedelta(days=5)
+            lines.append({"id": int_value, "string_col": self.random_string_generator(), "integer_col": int_value*5, "datetime_col": utils.strftime(start_datetime), "number_col": int_value + random.random()})
+        return lines
+
     def isdir(path, client):
         try:
             return S_ISDIR(client.stat(path).st_mode)

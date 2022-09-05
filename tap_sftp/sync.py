@@ -70,19 +70,21 @@ def sync_file(conn, f, stream, table_spec):
     tap_added_fields =  ['_sdc_source_file', '_sdc_source_lineno', 'sdc_extra']
     schema_dict = stream.schema.to_dict()
 
-    for reader in readers:
+    for file_extension, reader in readers:
         with Transformer() as transformer:
+            # Row start for files as per the file type
+            row_start_line = 2 if file_extension == 'csv' else 1
             for row in reader:
                 custom_columns = {
                     '_sdc_source_file': f["filepath"],
 
                     # index zero, +1 for header row
-                    '_sdc_source_lineno': records_synced + 2
+                    '_sdc_source_lineno': records_synced + row_start_line
                 }
 
                 # For CSV files, the '_sdc_extra' is handled by 'restkey' in 'csv.DictReader'
                 # If the file is JSONL then prepare '_sdc_extra' column
-                if f['filepath'].split('.')[-1] == 'jsonl':
+                if file_extension == 'jsonl':
                     sdc_extra = []
 
                     # Get the extra fields ie. (json keys - fields from catalog - fields added by the tap)

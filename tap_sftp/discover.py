@@ -65,7 +65,7 @@ def sample_file_local(conn, table_spec, f, sample_rate, max_records):
 
     readers = get_row_iterators_local(file_handle, options=opts, infer_compression=True)
 
-    for reader in readers:
+    for _, reader in readers:
         current_row = 0
         for row in reader:
             if (current_row % sample_rate) == 0:
@@ -114,15 +114,15 @@ def get_row_iterators_local(iterable, options={}, infer_compression=False):
         # For GZ files, if the file is gzipped with --no-name, then
         # the 'extension' will be 'None'. Hence, send an empty list
         if not extension:
-            yield []
+            yield (None, [])
         # If the extension is JSONL then use 'get_JSONL_iterators'
         elif extension == 'jsonl':
-            yield get_JSONL_iterators(item, options)
+            yield ('jsonl', get_JSONL_iterators(item, options))
         # Assuming the extension is 'csv' of 'txt', then use singer_encoding's 'get_row_iterator'
         else:
             # Maximize the CSV field width
             maximize_csv_field_width()
-            yield csv.get_row_iterator(item, options=options)
+            yield ('csv', csv.get_row_iterator(item, options=options))
 
 def get_JSONL_iterators(iterator, options):
     # Get JSOL rows
@@ -158,6 +158,9 @@ def get_JSONL_rows(iterator):
         decoded_row = row.decode('utf-8')
         if decoded_row.strip():
             row = json.loads(decoded_row)
+            # Skip if the row is empty
+            if not row:
+                continue
         else:
             continue
 
