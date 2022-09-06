@@ -13,7 +13,7 @@ class TestSFTPJsonlData(TestSFTPBase):
 
     def generate_jsonl_data(self):
         start_datetime = datetime(2018, 1, 1, 19, 29, 14, 578000, tzinfo=timezone.utc)
-        return [{"int": 1, "string": "string_data", "float": 1.22, "date": utils.strftime(start_datetime)}]
+        return [{"int": 1, "string": "string_data", "float": 1.2, "date": utils.strftime(start_datetime)}]
 
     def generate_jsonl_dict_data(self):
         start_datetime_1 = datetime(2018, 1, 1, 19, 29, 14, 578000, tzinfo=timezone.utc)
@@ -135,14 +135,14 @@ class TestSFTPJsonlData(TestSFTPBase):
             "mytable": {
                 "int": 1,
                 "string": "string_data",
-                "float": Decimal(1.22),
+                "float": Decimal("1.2"),
                 "date": "2018-01-01T19:29:14.578000Z",
                 "_sdc_source_lineno": 1
             },
             "mytable_list": {
                 "int": 1,
                 "list_int": [1, 2, 3],
-                "list_float": [Decimal(1.2), Decimal(2.3), Decimal(3.4)],
+                "list_float": [Decimal("1.2"), Decimal("2.3"), Decimal("3.4")],
                 "list_string": ["data", "of", "string"],
                 "list_dict": [{"id": 1}, {"id": 2}],
                 "list_list": ["[1, 2, 3]", "[4, 5, 6]"],
