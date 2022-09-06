@@ -5,17 +5,19 @@ import datetime
 from parameterized import parameterized
 import paramiko
 from tap_sftp.sync import sync_file, sync_stream
-from tap_sftp import do_sync
+from tap_sftp import do_sync, stats
 
 class Schema:
     '''
         Class to provide schema in dictionary format for given stream.
     '''
-    
     def __init__(self, stream):
         self.stream = stream
 
     def to_dict(self):
+        '''
+            Providing a dictionary of the schema.
+        '''
         return {'streams': self.stream}
 
 class Stream:
@@ -64,9 +66,8 @@ class TestSync(unittest.TestCase):
     @mock.patch('tap_sftp.stream_is_selected')
     @mock.patch("tap_sftp.client.SFTPConnection.sftp")
     @mock.patch("singer.write_schema")
-    @mock.patch("tap_sftp.LOGGER.info")
-    @mock.patch("tap_sftp.stats.STATS")
-    def test_do_sync(self,test_name, expected_value, mocked_stats, mocked_logger,
+    @mock.patch("tap_sftp.LOGGER")
+    def test_do_sync(self,test_name, expected_value, mocked_logger,
                      mocked_schema, mocked_connect, mocked_select):
         """
             Test case to verify that sync mode executes successfully.
@@ -74,25 +75,16 @@ class TestSync(unittest.TestCase):
 
         mocked_connect.side_effect = paramiko.SFTPClient
         mocked_select.return_value = expected_value
-        mocked_stats.return_value = {
-            'data': {
-                'search_prefix': '',
-                'search_pattern': 'txt',
-                'files': {
-                    'test.txt': {
-                        'last_modified': datetime.datetime.now(),
-                        'row_count': 2
-                    }
-                }
-            }
-        }
 
         catalog=Catalog('data')
+        table_spec = {'table_name': 'data', 'search_prefix': '', 'search_pattern': 'txt'}
 
+        # Setting the GLOBAL variable STATS
+        stats.add_file_data(table_spec, '/test.txt', datetime.datetime.now(), 0)
         do_sync(self.config,catalog,state={'start_date': '2020-01-01'})
 
         self.assertEqual(mocked_select.call_count,1)
-        mocked_logger.assert_called_with('Done syncing.')
+        mocked_logger.info.assert_called_with('Done syncing.')
 
     @mock.patch("tap_sftp.sync.LOGGER.info")
     def test_sync_stream_no_table_spec(self,mocked_logger):
@@ -155,7 +147,8 @@ class TestSync(unittest.TestCase):
 
     @mock.patch("tap_sftp.client.SFTPConnection.sftp")
     @mock.patch("tap_sftp.client.SFTPConnection.get_files")
-    def test_sync_stream(self, mocked_get_files, mocked_connect):
+    @mock.patch("tap_sftp.sync.LOGGER")
+    def test_sync_stream(self, mocked_logger, mocked_get_files, mocked_connect):
         '''
             Test case to verify that records are fetched from files and
             total number of records fetched is returned.
@@ -170,7 +163,8 @@ class TestSync(unittest.TestCase):
 
     @mock.patch("singer_encodings.csv.get_row_iterators")
     @mock.patch("tap_sftp.client.SFTPConnection.sftp")
-    def test_sync_file(self, mocked_connection, mocked_iterator):
+    @mock.patch("tap_sftp.sync.LOGGER")
+    def test_sync_file(self, mocked_logger, mocked_connection, mocked_iterator):
         '''
             Test case to verify that a file is synced by fetching records from it
             and total number of records fetched is returned.
