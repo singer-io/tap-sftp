@@ -11,6 +11,13 @@ class TestSFTPAllFields(TestSFTPBase):
     def name(self):
         return "tap_tester_sftp_all_fields"
 
+    def generate_simple_csv_lines_typeA(self, num_lines):
+        """Overriding the function to generate '_sdc_extra_' field"""
+        lines = []
+        for int_value in range(num_lines):
+            lines.append([int_value, self.random_string_generator(), int_value*5, 'extra_field_1', 'extra_field_2' ])
+        return lines
+
     def get_files(self):
         """Generate files for the test"""
         return [
@@ -72,7 +79,7 @@ class TestSFTPAllFields(TestSFTPBase):
                 }
             ])
         return props
-    
+
     def expected_check_streams(self):
         """Expected streams"""
         return {
@@ -84,7 +91,7 @@ class TestSFTPAllFields(TestSFTPBase):
         return {
             'table_1': {'id'},
         }
-    
+
     def test_run(self):
         """
         Ensure running the tap with all streams and fields selected results in the
@@ -108,7 +115,7 @@ class TestSFTPAllFields(TestSFTPBase):
                                           for md_entry in c_annotated['metadata']
                                           if md_entry['breadcrumb'] != []]
             stream_to_all_catalog_fields[c['stream_name']] = set(fields_from_field_level_md)
-    
+
         # Clear state before our run
         menagerie.set_state(conn_id, {})
 
@@ -116,7 +123,7 @@ class TestSFTPAllFields(TestSFTPBase):
         self.perform_and_verify_table_and_field_selection(conn_id,found_catalogs)
 
         synced_records = runner.get_records_from_target_output()
-        
+
 
         # Verify no unexpected streams were replicated
         synced_stream_names = set(synced_records.keys())
@@ -127,10 +134,7 @@ class TestSFTPAllFields(TestSFTPBase):
 
                     # Expected values
                     expected_all_keys = stream_to_all_catalog_fields[stream]
-                    
-                    # Tap is not writing _sdc_extra so removing it from expected keys.
-                    expected_all_keys = expected_all_keys - {"_sdc_extra"}
-                    
+
                     messages = synced_records.get(stream)
                     # Collect actual values
                     actual_all_keys = set()
