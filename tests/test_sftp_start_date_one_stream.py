@@ -10,6 +10,7 @@ from datetime import datetime as dt
 RECORD_COUNT = {}
 
 class TestSFTPStartDateOneStream(TestSFTPBase):
+    """Test case to verify the Tap respected the start date provided in the config"""
 
     def get_files(self):
         return [
@@ -23,40 +24,8 @@ class TestSFTPStartDateOneStream(TestSFTPBase):
         ]
 
     def setUp(self):
-        if not all([x for x in [os.getenv('TAP_SFTP_USERNAME'),
-                                os.getenv('TAP_SFTP_PASSWORD'),
-                                os.getenv('TAP_SFTP_ROOT_DIR')]]):
-            #pylint: disable=line-too-long
-            raise Exception("set TAP_SFTP_USERNAME, TAP_SFTP_PASSWORD, TAP_SFTP_ROOT_DIR")
-
-        root_dir = os.getenv('TAP_SFTP_ROOT_DIR')
-
-        with self.get_test_connection() as client:
-            # drop all csv files in root dir
-            client.chdir(root_dir)
-            try:
-                TestSFTPStartDateOneStream.rm('tap_tester', client)
-            except FileNotFoundError:
-                pass
-            client.mkdir('tap_tester')
-            client.chdir('tap_tester')
-
-            # Add subdirectories
-            file_info = self.get_files()
-            for entry in file_info:
-                client.mkdir(entry['directory'])
-
-            # Add csv files
-            for file_group in file_info:
-                headers = file_group['headers']
-                directory = file_group['directory']
-                for filename in file_group['files']:
-                    client.chdir(directory)
-                    with client.open(filename, 'w') as f:
-                        writer = csv.writer(f)
-                        lines = [headers] + file_group['generator'](file_group['num_rows'])
-                        writer.writerows(lines)
-                    client.chdir('..')
+        """Setup the directory for test """
+        self.add_dir()
 
     def expected_first_sync_streams(self):
         return {
@@ -102,7 +71,7 @@ class TestSFTPStartDateOneStream(TestSFTPBase):
     
     def file_modified_test(self):
 
-        # sync 1
+        # Sync 1
         conn_id_1 = connections.ensure_connection(self)
 
         found_catalogs_1 = self.run_and_verify_check_mode(conn_id_1)
@@ -112,16 +81,16 @@ class TestSFTPStartDateOneStream(TestSFTPBase):
         record_count_by_stream_1 = self.run_and_verify_sync(conn_id_1)
         synced_records_1 = runner.get_records_from_target_output()
 
-        # checking if we got any records
+        # Checking if we got any records
         self.assertGreater(sum(record_count_by_stream_1.values()), 0)
 
-        # changing start date to "utcnow"
+        # Changing start date to "utcnow"
         self.START_DATE = dt.strftime(dt.utcnow(), "%Y-%m-%dT00:00:00Z")
 
-        # adding some data to the file
+        # Adding some data to the file
         self.append_to_files()
 
-        # sync 2
+        # Sync 2
         conn_id_2 = connections.ensure_connection(self, original_properties = False)
 
         found_catalogs_2 = self.run_and_verify_check_mode(conn_id_2)
@@ -131,10 +100,10 @@ class TestSFTPStartDateOneStream(TestSFTPBase):
         record_count_by_stream_2 = self.run_and_verify_sync(conn_id_2)
         synced_records_2 = runner.get_records_from_target_output()
 
-        # checking if we got any data
+        # Checking if we got any data
         self.assertGreater(sum(record_count_by_stream_2.values()), 0)
 
-        # verifying if we got more data in sync 2 than sync 1
+        # Verifying if we got more data in sync 2 than sync 1
         self.assertGreater(sum(record_count_by_stream_2.values()), sum(record_count_by_stream_1.values()))
 
         for stream in self.expected_check_streams():
@@ -162,7 +131,7 @@ class TestSFTPStartDateOneStream(TestSFTPBase):
 
     def file_not_modified_test(self):
 
-        # sync 1
+        # Sync 1
         conn_id_1 = connections.ensure_connection(self)
 
         found_catalogs_1 = self.run_and_verify_check_mode(conn_id_1)
@@ -173,18 +142,18 @@ class TestSFTPStartDateOneStream(TestSFTPBase):
 
         self.assertGreater(sum(record_count_by_stream1.values()), 0)
 
-        # changing start date to "utcnow"
+        # Changing start date to "utcnow"
         self.START_DATE = dt.strftime(dt.utcnow(), "%Y-%m-%dT00:00:00Z")
 
-        # sync 2
+        # Sync 2
         conn_id_2 = connections.ensure_connection(self, original_properties = False)
 
         found_catalogs_2 = self.run_and_verify_check_mode(conn_id_2)
 
         self.perform_and_verify_table_and_field_selection(conn_id_2,found_catalogs_2)
 
-        # as we have not added any data, so file is not modified and
-        # we should not get any data and recieve error: failed to replicate any data
+        # As we have not added any data, so file is not modified and
+        # We should not get any data and recieve error: failed to replicate any data
         try:
             self.run_and_verify_sync(conn_id_2)
         except AssertionError as e:
