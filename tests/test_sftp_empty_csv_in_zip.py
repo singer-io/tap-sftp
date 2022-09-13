@@ -7,6 +7,7 @@ import zipfile
 RECORD_COUNT = {}
 
 class TestSFTPEmptyCSVInZIP(TestSFTPBase):
+    """Test case to verify empty csv in zip"""
 
     def name(self):
         return "tap_tester_sftp_empty_csv_in_zip"

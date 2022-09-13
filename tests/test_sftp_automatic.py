@@ -3,61 +3,21 @@ import tap_tester.connections as connections
 import tap_tester.menagerie   as menagerie
 import tap_tester.runner      as runner
 import os
-import csv
 import json
 
 class TestSFTPAutomatic(TestSFTPBase):
+    """Test case to verify we are replicating automatic fields data when all the fields are not selected"""
 
     def name(self):
+        """Returns name of the test"""
         return "tap_tester_sftp_automatic_fields"
 
-    def get_files(self):
-        return [
-            {
-                "headers": ['id', 'string_col', 'integer_col'],
-                "directory": "table_1_files",
-                "files": ["table_1_fileA.csv"],
-                "num_rows": 50,
-                "generator": self.generate_simple_csv_lines_typeA
-            }
-        ]
-
     def setUp(self):
-        if not all([x for x in [os.getenv('TAP_SFTP_USERNAME'),
-                                os.getenv('TAP_SFTP_PASSWORD'),
-                                os.getenv('TAP_SFTP_ROOT_DIR')]]):
-            # pylint: disable=line-too-long
-            raise Exception("set TAP_SFTP_USERNAME, TAP_SFTP_PASSWORD, TAP_SFTP_ROOT_DIR")
-
-        root_dir = os.getenv('TAP_SFTP_ROOT_DIR')
-
-        with self.get_test_connection() as client:
-            # Drop all csv files in root dir
-            client.chdir(root_dir)
-            try:
-                TestSFTPAutomatic.rm('tap_tester', client)
-            except FileNotFoundError:
-                pass
-            client.mkdir('tap_tester')
-
-            # Add subdirectories
-            client.mkdir('tap_tester/table_1_files')
-
-            # Add csv files
-            client.chdir('tap_tester')
-
-            for file_group in self.get_files():
-                headers = file_group['headers']
-                directory = file_group['directory']
-                for filename in file_group['files']:
-                    client.chdir(directory)
-                    with client.open(filename, 'w') as f:
-                        writer = csv.writer(f)
-                        lines = [headers] + file_group['generator'](file_group['num_rows'])
-                        writer.writerows(lines)
-                    client.chdir('..')
+        """Setup the directory for test """
+        self.add_dir()
 
     def get_properties(self):
+        """Get table properties"""
         props = self.get_common_properties()
         props['tables'] = json.dumps([
                 {
@@ -71,20 +31,24 @@ class TestSFTPAutomatic(TestSFTPBase):
         return props
 
     def expected_sync_streams(self):
+        """Expected sync streams"""
         return {
             'table_1',
         }
     def expected_check_streams(self):
+        """Expected streams"""
         return {
             'table_1',
         }
 
     def expected_pks(self):
-        return {
+       """Expected primary keys"""
+       return {
             'table_1': {'id'},
         }
 
     def expected_automatic_fields(self):
+        """Expected automatic fields"""
         return {
             'table_1': {'id'},
         }

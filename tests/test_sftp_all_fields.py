@@ -3,12 +3,13 @@ import tap_tester.connections as connections
 import tap_tester.menagerie   as menagerie
 import tap_tester.runner      as runner
 import os
-import csv
 import json
 
 class TestSFTPAllFields(TestSFTPBase):
+    """Test case to verify we are replicating all fields data from the Tap"""
 
     def name(self):
+        """Returns name of the test"""
         return "tap_tester_sftp_all_fields"
 
     def generate_simple_csv_lines_typeA(self, num_lines):
@@ -18,53 +19,9 @@ class TestSFTPAllFields(TestSFTPBase):
             lines.append([int_value, self.random_string_generator(), int_value*5, 'extra_field_1', 'extra_field_2' ])
         return lines
 
-    def get_files(self):
-        """Generate files for the test"""
-        return [
-            {
-                "headers": ['id', 'string_col', 'string_col'],
-                "directory": "table_1_files",
-                "files": ["table_1_fileA.csv"],
-                "num_rows": 50,
-                "generator": self.generate_simple_csv_lines_typeA
-            },
-        ]
-
     def setUp(self):
         """Setup the directory for test """
-        if not all([x for x in [os.getenv('TAP_SFTP_USERNAME'),
-                                os.getenv('TAP_SFTP_PASSWORD'),
-                                os.getenv('TAP_SFTP_ROOT_DIR')]]):
-            #pylint: disable=line-too-long
-            raise Exception("set TAP_SFTP_USERNAME, TAP_SFTP_PASSWORD, TAP_SFTP_ROOT_DIR")
-
-        root_dir = os.getenv('TAP_SFTP_ROOT_DIR')
-
-        with self.get_test_connection() as client:
-            # drop all csv files in root dir
-            client.chdir(root_dir)
-            try:
-                TestSFTPAllFields.rm('tap_tester', client)
-            except FileNotFoundError:
-                pass
-            client.mkdir('tap_tester')
-
-            # Add subdirectories
-            client.mkdir('tap_tester/table_1_files')
-
-            # Add csv files
-            client.chdir('tap_tester')
-
-            for file_group in self.get_files():
-                headers = file_group['headers']
-                directory = file_group['directory']
-                for filename in file_group['files']:
-                    client.chdir(directory)
-                    with client.open(filename, 'w') as f:
-                        writer = csv.writer(f)
-                        lines = [headers] + file_group['generator'](file_group['num_rows'])
-                        writer.writerows(lines)
-                    client.chdir('..')
+        self.add_dir()
 
     def get_properties(self):
         """Get table properties"""

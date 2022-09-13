@@ -11,6 +11,7 @@ import io
 RECORD_COUNT = {}
 
 class TestSFTPEmptyCSVInGZ(TestSFTPBase):
+    """Test case to verify empty csv in gz"""
 
     def name(self):
         return "tap_tester_sftp_empty_csv_in_gz"

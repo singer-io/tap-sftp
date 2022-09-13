@@ -11,6 +11,7 @@ import datetime
 RECORD_COUNT = {}
 
 class TestSFTPOrderedFiles(TestSFTPBase):
+    """Test case to verify tap sorts the files in expected manner"""
 
     def name(self):
         return "tap_tester_sftp_ordered_files"
@@ -29,40 +30,8 @@ class TestSFTPOrderedFiles(TestSFTPBase):
         ]
 
     def setUp(self):
-        if not all([x for x in [os.getenv('TAP_SFTP_USERNAME'),
-                                os.getenv('TAP_SFTP_PASSWORD'),
-                                os.getenv('TAP_SFTP_ROOT_DIR')]]):
-            # pylint: disable=line-too-long
-            raise Exception("set TAP_SFTP_USERNAME, TAP_SFTP_PASSWORD, TAP_SFTP_ROOT_DIR")
-
-        root_dir = os.getenv('TAP_SFTP_ROOT_DIR')
-
-        with self.get_test_connection() as client:
-            # Drop all csv files in root dir
-            client.chdir(root_dir)
-            try:
-                TestSFTPOrderedFiles.rm('tap_tester', client)
-            except FileNotFoundError:
-                pass
-            client.mkdir('tap_tester')
-            client.chdir('tap_tester')
-
-            # Add subdirectories
-            file_info = self.get_files()
-            for entry in file_info:
-                client.mkdir(entry['directory'])
-
-            # Add csv files
-            for file_group in file_info:
-                headers = file_group['headers']
-                directory = file_group['directory']
-                for filename in file_group['files']:
-                    client.chdir(directory)
-                    with client.open(filename, 'w') as f:
-                        writer = csv.writer(f)
-                        lines = [headers] + file_group['generator'](file_group['num_rows'])
-                        writer.writerows(lines)
-                    client.chdir('..')
+        """Setup the directory for test """
+        self.add_dir()
 
     def expected_check_streams(self):
         return {

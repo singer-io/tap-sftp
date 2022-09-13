@@ -9,6 +9,7 @@ import zipfile
 
 RECORD_COUNT = {}
 class TestSFTPZip(TestSFTPBase):
+    """Test case to verify tap works fine for zip files"""
 
     def name(self):
         return "tap_tester_sftp_zip"

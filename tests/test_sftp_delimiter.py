@@ -9,7 +9,7 @@ import json
 RECORD_COUNT = {}
 
 class TestSFTPDelimiter(TestSFTPBase):
-
+    """Test case to verify delimiter works as expected"""
     def name(self):
         return "tap_tester_sftp_delimiter"
 

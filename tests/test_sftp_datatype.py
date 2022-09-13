@@ -1,78 +1,43 @@
+import logging
 from base import TestSFTPBase
+from datetime import datetime, timezone
+from decimal import Decimal
 from functools import reduce
 import os
-import csv
 import json
+from singer import utils
 from tap_tester import connections, menagerie, runner, LOGGER
 
 
 class TestSFTPDatatype(TestSFTPBase):    
+    """Test case to verify tap is writing data with appropriate type """
     def name(self):
-            return "tap_tester_sftp_Datatype"
+        """Returns name of the test"""
+        return "tap_tester_sftp_Datatype"
+
+    def generate_records(self, num_lines):
+        """Generates records for files"""
+        lines = []
+        for int_value in range(num_lines):
+            start_datetime = datetime(2018, 1, 1, 19, 29, 14, 578000, tzinfo=timezone.utc)
+            lines.append([int_value, 'test_data' , int_value*5, utils.strftime(start_datetime), ["data", "of", "string"],{"key1": "value1", "key2": "value2"},1.22])
+        return lines
 
     def get_files(self):
         """Generate files for the test"""
         return [
             {
-                "headers": ['id', 'string_col', 'integer_col'],
+                "headers": ['id', 'string_col', 'integer_col', 'date_col', "list_string", "dict_string","float_col"],
                 "directory": "table_1_files",
-                "files": ["table_1_fileA.csv", "table_3_fileA.csv"],
-                "num_rows": 50,
-                "generator": self.generate_simple_csv_lines_typeA
-            },
-            {
-                "headers": ['id', 'string_col', 'datetime_col', 'number_col'],
-                "directory": "table_2_files",
-                "files": ["table_2_fileA.csv", "table_2_fileB.csv", "table_3_fileB.csv"],
-                "num_rows": 50,
-                "generator": self.generate_simple_csv_lines_typeB
-            },
-            {
-                "headers": ['id', 'string_col', 'integer_col', 'datetime_col', 'number_col'],
-                "directory": "table_3_files",
-                "files": ["table_3_fileC.csv"],
-                "num_rows": 50,
-                "generator": self.generate_simple_csv_lines_typeC
+                "files": ["table_1_fileA.csv"],
+                "num_rows": 1,
+                "generator": self.generate_records
             },
         ]
 
     def setUp(self):
         """Setup the directory for test """
-        if not all([x for x in [os.getenv('TAP_SFTP_USERNAME'),
-                                os.getenv('TAP_SFTP_PASSWORD'),
-                                os.getenv('TAP_SFTP_ROOT_DIR')]]):
-            # pylint: disable=line-too-long
-            raise Exception("set TAP_SFTP_USERNAME, TAP_SFTP_PASSWORD, TAP_SFTP_ROOT_DIR")
-
-        root_dir = os.getenv('TAP_SFTP_ROOT_DIR')
-
-        with self.get_test_connection() as client:
-            # Drop all csv files in root dir
-            client.chdir(root_dir)
-            try:
-                TestSFTPDatatype.rm('tap_tester', client)
-            except FileNotFoundError:
-                pass
-            client.mkdir('tap_tester')
-
-            # Add subdirectories
-            client.mkdir('tap_tester/table_1_files')
-            client.mkdir('tap_tester/table_2_files')
-            client.mkdir('tap_tester/table_3_files')
-
-            # Add csv files
-            client.chdir('tap_tester')
-
-            for file_group in self.get_files():
-                headers = file_group['headers']
-                directory = file_group['directory']
-                for filename in file_group['files']:
-                    client.chdir(directory)
-                    with client.open(filename, 'w') as f:
-                        writer = csv.writer(f)
-                        lines = [headers] + file_group['generator'](file_group['num_rows'])
-                        writer.writerows(lines)
-                    client.chdir('..')
+        self.add_dir()
 
     def get_properties(self):
         """Get table properties"""
@@ -84,22 +49,6 @@ class TestSFTPDatatype(TestSFTPBase):
                     "search_prefix": os.getenv("TAP_SFTP_ROOT_DIR") + "/tap_tester",
                     "search_pattern": "table_1.*csv",
                     "key_properties": ['id']
-                },
-                {
-                    "table_name": "table_2",
-                    "delimiter": ",",
-                    "search_prefix": os.getenv("TAP_SFTP_ROOT_DIR") + "/tap_tester",
-                    "search_pattern": "table_2.*csv",
-                    "key_properties": ['id'],
-                    "date_overrides": ["datetime_col"]
-                },
-                {
-                    "table_name": "table_3",
-                    "delimiter": ",",
-                    "search_prefix": os.getenv("TAP_SFTP_ROOT_DIR") + "/tap_tester",
-                    "search_pattern": "table_3.*csv",
-                    "key_properties": ['id'],
-                    "date_overrides": ["datetime_col"]
                 }
             ])
         return props
@@ -108,33 +57,43 @@ class TestSFTPDatatype(TestSFTPBase):
         """Expected sync streams"""
         return {
             'table_1',
-            'table_2',
-            'table_3',
         }
     def expected_check_streams(self):
         """Expected check streams"""
         return {
             'table_1',
-            'table_2',
-            'table_3',
         }
     def expected_pks(self):
         """Expected primary keys"""
         return {
             'table_1': {"id"},
-            'table_2': {"id"},
-            'table_3': {"id"},
         }
 
     def expected_sync_row_counts(self):
         """Expected row count"""
         return {
-            'table_1': 100,
-            'table_2': 150,
-            'table_3': 150
+            'table_1': 1,
         }
 
+    def expected_data(self):
+        """Expected data"""
+        return {
+            'id': 0,
+            'string_col': 'test_data',
+            'integer_col': 0,
+            "date_col": "2018-01-01T19:29:14.578000Z",
+            "list_string": "['data', 'of', 'string']" ,
+            "dict_string":"{'key1': 'value1', 'key2': 'value2'}",
+            'float_col': Decimal('1.22'),
+            '_sdc_source_lineno': 2,
+        }
+
+
     def test_discovery_run(self):
+        """
+        - Verify we discovered correct streams.
+        - Verify the Primary keys are correct.
+        """
         conn_id = connections.ensure_connection(self)
         # Run in discovery mode
         check_job_name = runner.run_check_mode(self, conn_id)
@@ -158,6 +117,10 @@ class TestSFTPDatatype(TestSFTPBase):
                              set(found_stream.get('metadata', {})[0].get('metadata', {}).get('table-key-properties')))
 
     def test_run_sync_mode(self):
+        """
+        - Verify actual rows were synced
+        - Verify the record data matches the expected data
+        """
         conn_id = connections.ensure_connection(self)
         
         # Select our catalogs
@@ -190,8 +153,22 @@ class TestSFTPDatatype(TestSFTPBase):
                 )
 
         LOGGER.info("total replicated row count: {}".format(replicated_row_count))
+
+        messages_by_stream = runner.get_records_from_target_output()
+
+        # Verify the record data matches the expected data
+        for stream in self.expected_check_streams():
+            records = [record.get("data") for record in messages_by_stream.get(stream, {}).get("messages", [])
+                       if record.get("action") == "upsert"]
+            self.assertEqual(len(records), 1)
+            for record in records:
+                del record["_sdc_source_file"]
+            self.assertEqual([self.expected_data()], records)
     
     def test_primary_keys(self):
+        """
+        - Verify that expected_key_properties show as automatic in metadata
+        """
         conn_id = connections.ensure_connection(self)
         found_catalogs = self.run_and_verify_check_mode(conn_id)
         all_catalogs = [x for x in found_catalogs]

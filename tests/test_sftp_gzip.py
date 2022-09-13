@@ -11,6 +11,7 @@ import io
 RECORD_COUNT = {}
 
 class TestSFTPGzip(TestSFTPBase):
+    """Test case to verify tap runs as expected with gzip files."""
 
     def name(self):
         return "tap_tester_sftp_gzip"

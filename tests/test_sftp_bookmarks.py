@@ -6,73 +6,15 @@ import json
 from tap_tester import connections, menagerie, runner, LOGGER
 
 class TestSFTPBookmark(TestSFTPBase):
+    """Test case to verify the Tap is writing bookmark as expectation"""
 
     def name(self):
+        """Returns name of the test"""
         return "tap_tester_sftp_bookmark"
-
-    def get_files(self):
-        """Generate files for the test"""
-        return [
-            {
-                "headers": ['id', 'string_col', 'integer_col'],
-                "directory": "table_1_files",
-                "files": ["table_1_fileA.csv", "table_3_fileA.csv"],
-                "num_rows": 50,
-                "generator": self.generate_simple_csv_lines_typeA
-            },
-            {
-                "headers": ['id', 'string_col', 'datetime_col', 'number_col'],
-                "directory": "table_2_files",
-                "files": ["table_2_fileA.csv", "table_2_fileB.csv", "table_3_fileB.csv"],
-                "num_rows": 50,
-                "generator": self.generate_simple_csv_lines_typeB
-            },
-            {
-                "headers": ['id', 'string_col', 'integer_col', 'datetime_col', 'number_col'],
-                "directory": "table_3_files",
-                "files": ["table_3_fileC.csv"],
-                "num_rows": 50,
-                "generator": self.generate_simple_csv_lines_typeC
-            },
-        ]
 
     def setUp(self):
         """Setup the directory for test """
-        if not all([x for x in [os.getenv('TAP_SFTP_USERNAME'),
-                                os.getenv('TAP_SFTP_PASSWORD'),
-                                os.getenv('TAP_SFTP_ROOT_DIR')]]):
-            # pylint: disable=line-too-long
-            raise Exception("set TAP_SFTP_USERNAME, TAP_SFTP_PASSWORD, TAP_SFTP_ROOT_DIR")
-
-        root_dir = os.getenv('TAP_SFTP_ROOT_DIR')
-
-        with self.get_test_connection() as client:
-            # Drop all csv files in root dir
-            client.chdir(root_dir)
-            try:
-                TestSFTPBookmark.rm('tap_tester', client)
-            except FileNotFoundError:
-                pass
-            client.mkdir('tap_tester')
-
-            # Add subdirectories
-            client.mkdir('tap_tester/table_1_files')
-            client.mkdir('tap_tester/table_2_files')
-            client.mkdir('tap_tester/table_3_files')
-
-            # Add csv files
-            client.chdir('tap_tester')
-
-            for file_group in self.get_files():
-                headers = file_group['headers']
-                directory = file_group['directory']
-                for filename in file_group['files']:
-                    client.chdir(directory)
-                    with client.open(filename, 'w') as f:
-                        writer = csv.writer(f)
-                        lines = [headers] + file_group['generator'](file_group['num_rows'])
-                        writer.writerows(lines)
-                    client.chdir('..')
+        self.add_dir()
 
     def get_properties(self):
         """Get table properties"""
