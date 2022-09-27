@@ -30,8 +30,8 @@ def compression_infer_local(iterable, file_name):
 
 def get_row_iterators_local(iterable, options={}, infer_compression=False, headers_in_catalog=None, with_duplicate_headers=False):
     """
-    Accepts an interable, options and a flag to infer compression and
-    yields csv.DictReader objects can be used to yield CSV rows.
+    Accepts an iterable, options, compression flag, catalog headers and flag for duplicate headers
+    to infer compression and yields csv.DictReader objects can be used to yield CSV rows.
     """
     if infer_compression:
         compressed_iterables = compression_infer_local(iterable, options.get('file_name'))
