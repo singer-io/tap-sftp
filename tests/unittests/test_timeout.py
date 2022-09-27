@@ -140,7 +140,7 @@ class TimeoutBackoff(unittest.TestCase):
     """
 
     @mock.patch("singer.metadata.get_standard_metadata")
-    @mock.patch("singer_encodings.json_schema.get_schema_for_table")
+    @mock.patch("tap_sftp.discover.get_schema_for_table_local")
     def test_timeout_backoff__get_schema(self, mocked_get_schema_for_table, mocked_get_standard_metadata):
         """
             Test case to verify we backoff and retry for 'get_schema' function

@@ -42,7 +42,7 @@ class TestSyncJSONLsdcFields(unittest.TestCase):
             "search_prefix": None,
             "search_pattern": "data.jsonl"
         }
-        stream = singer.CatalogEntry(tap_stream_id="test", schema=singer.Schema(), metadata=[])
+        stream = singer.CatalogEntry(tap_stream_id="test", schema=singer.Schema(properties={}), metadata=[])
         f = {"filepath": "/root_dir/data.jsonl", "last_modified": "2022-01-01"}
         sync.sync_file(conn=conn, f=f, stream=stream, table_spec=table_spec)
         args = mocked_transform.call_args.args
