@@ -27,9 +27,7 @@ def sync_stream(config, state, stream):
         return 0
     table_spec = table_spec[0]
 
-    files = conn.get_files(table_spec["search_prefix"],
-                           table_spec["search_pattern"],
-                           modified_since)
+    files = conn.get_files(table_spec, modified_since)
 
     LOGGER.info('Found %s files to be synced.', len(files))
 
@@ -67,19 +65,44 @@ def sync_file(conn, f, stream, table_spec):
     readers = csv.get_row_iterators(file_handle, options=opts, infer_compression=True)
 
     records_synced = 0
+    tap_added_fields =  ['_sdc_source_file', '_sdc_source_lineno', 'sdc_extra']
+    schema_dict = stream.schema.to_dict()
 
-    for reader in readers:
+    for file_extension, reader in readers:
         with Transformer() as transformer:
+            # Row start for files as per the file type
+            row_start_line = 1 if file_extension == 'jsonl' else 2
             for row in reader:
+                # Skipping the empty line
+                if len(row) == 0:
+                    continue
+
                 custom_columns = {
                     '_sdc_source_file': f["filepath"],
-
-                    # index zero, +1 for header row
-                    '_sdc_source_lineno': records_synced + 2
+                    '_sdc_source_lineno': records_synced + row_start_line
                 }
+
+                # For CSV files, the '_sdc_extra' is handled by 'restkey' in 'csv.DictReader'
+                # If the file is JSONL then prepare '_sdc_extra' column
+                if file_extension == 'jsonl':
+                    sdc_extra = []
+
+                    # Get the extra fields ie. (json keys - fields from the catalog - fields added by the tap)
+                    extra_fields = set()
+                    # Create '_sdc_extra' fields if the schema is not empty
+                    if schema_dict.get('properties'):
+                        extra_fields = set(row.keys()) - set(schema_dict.get('properties', {}).keys() - tap_added_fields)
+
+                    # Prepare list of extra fields
+                    for extra_field in extra_fields:
+                        sdc_extra.append({extra_field: row.get(extra_field)})
+                    # If the record contains extra fields, then add the '_sdc_extra' column
+                    if extra_fields:
+                        custom_columns['_sdc_extra'] = sdc_extra
+
                 rec = {**row, **custom_columns}
 
-                to_write = transformer.transform(rec, stream.schema.to_dict(), metadata.to_map(stream.metadata))
+                to_write = transformer.transform(rec, schema_dict, metadata.to_map(stream.metadata))
 
                 singer.write_record(stream.tap_stream_id, to_write)
                 records_synced += 1

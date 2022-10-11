@@ -1,44 +1,47 @@
 from base import TestSFTPBase
-import tap_tester.connections as connections
-import tap_tester.menagerie   as menagerie
-import tap_tester.runner      as runner
 import os
-import csv
 import json
-import gzip
-import io
+import zipfile
 
-RECORD_COUNT = {}
-
-class TestSFTPGzip(TestSFTPBase):
+class TestSFTPZipJsonl(TestSFTPBase):
 
     def name(self):
-        return "tap_tester_sftp_gzip"
+        return "tap_tester_sftp_jsonl_zip"
 
     def get_files(self):
         return [
             {
                 "headers": ['id', 'string_col', 'integer_col'],
                 "directory": "folderA",
-                "files": ["table_1_fileA.csv.gz", "table_3_fileA.csv.gz"],
+                "files": ["table_1_fileA.jsonl", "table_3_fileA.jsonl"],
+                "archive": 'table_1.zip',
                 "num_rows": 50,
-                "generator": self.generate_simple_csv_lines_typeA
+                "generator": self.generate_simple_jsonl_lines_typeA
             },
             {
                 "headers": ['id', 'string_col', 'datetime_col', 'number_col'],
                 "directory": "folderB",
-                "files": ["table_2_fileA.csv.gz", "table_2_fileB.csv.gz", "table_3_fileB.csv.gz"],
+                "files": ["table_2_fileA.jsonl", "table_2_fileB.jsonl", "table_3_fileB.jsonl"],
+                "archive": 'table_2.zip',
                 "num_rows": 50,
-                "generator": self.generate_simple_csv_lines_typeB
+                "generator": self.generate_simple_jsonl_lines_typeB
             },
             {
-                "headers": ['id', 'string_col', 'integer_col', 'datetime_col', 'number_col'],
+                "headers": ['id', 'string_col', 'integer_col'],
                 "directory": "folderC",
-                "files": ["table_3_fileC.csv.gz"],
+                "files": ["table_3_fileC.jsonl"],
+                "archive": 'table_3.zip',
                 "num_rows": 50,
-                "generator": self.generate_simple_csv_lines_typeC
+                "generator": self.generate_simple_jsonl_lines_typeA
             },
         ]
+
+    def expected_first_sync_row_counts(self):
+        return {
+            'table_1': 100,
+            'table_2': 150,
+            'table_3': 50
+        }
 
     def setUp(self):
         if not all([x for x in [os.getenv('TAP_SFTP_USERNAME'),
@@ -53,7 +56,7 @@ class TestSFTPGzip(TestSFTPBase):
             # drop all csv files in root dir
             client.chdir(root_dir)
             try:
-                TestSFTPGzip.rm('tap_tester', client)
+                TestSFTPZipJsonl.rm('tap_tester', client)
             except FileNotFoundError:
                 pass
             client.mkdir('tap_tester')
@@ -66,42 +69,41 @@ class TestSFTPGzip(TestSFTPBase):
 
             # Add csv files
             for file_group in file_info:
-                headers = file_group['headers']
                 directory = file_group['directory']
-                for filename in file_group['files']:
-                    file_to_gzip = ".".join(filename.split(".")[:-1])
-                    client.chdir(directory)
-                    with client.open(filename, 'w') as direct_file:
-                        with gzip.GzipFile(filename=file_to_gzip, fileobj=direct_file, mode='w') as gzip_file:
-                            with io.TextIOWrapper(gzip_file, encoding='utf-8') as f:
-                                writer = csv.writer(f)
-                                lines = [headers] + file_group['generator'](file_group['num_rows'])
-                                writer.writerows(lines)
-                    client.chdir('..')
+                client.chdir(directory)
+                with client.open(file_group['archive'], 'w') as direct_file:
+                    with zipfile.ZipFile(direct_file, mode='w') as zip_file:
+                        lines = file_group['generator'](file_group['num_rows'])
+                        total = ''
+                        for line in lines:
+                            total += json.dumps(line) + '\n'
+                        for file_name in file_group['files']:
+                            zip_file.writestr(file_name, total)
+                client.chdir('..')
 
     def get_properties(self):
         props = self.get_common_properties()
         props['tables'] = json.dumps([
                 {
                     "table_name": "table_1",
-                    "delimiter": ",",
                     "search_prefix": os.getenv("TAP_SFTP_ROOT_DIR") + "/tap_tester",
-                    "search_pattern": "table_1.*csv",
+                    "delimiter": ",",
+                    "search_pattern": "table_1\.zip",
                     "key_properties": ['id']
                 },
                 {
                     "table_name": "table_2",
-                    "delimiter": ",",
                     "search_prefix": os.getenv("TAP_SFTP_ROOT_DIR") + "/tap_tester",
-                    "search_pattern": "table_2.*csv",
+                    "delimiter": ",",
+                    "search_pattern": "table_2\.zip",
                     "key_properties": ['id'],
                     "date_overrides": ["datetime_col"]
                 },
                 {
                     "table_name": "table_3",
-                    "delimiter": ",",
                     "search_prefix": os.getenv("TAP_SFTP_ROOT_DIR") + "/tap_tester",
-                    "search_pattern": "table_3.*csv",
+                    "delimiter": ",",
+                    "search_pattern": "table_3\.zip",
                     "key_properties": ['id'],
                     "date_overrides": ["datetime_col"]
                 }

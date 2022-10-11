@@ -61,9 +61,10 @@ class TestSFTPEmptyCSVInGZ(TestSFTPBase):
                 headers = file_group['headers']
                 directory = file_group['directory']
                 for filename in file_group['files']:
+                    file_to_gzip = ".".join(filename.split(".")[:-1])
                     client.chdir(directory)
                     with client.open(filename, 'w') as direct_file:
-                        with gzip.GzipFile(fileobj=direct_file, mode='w') as gzip_file:
+                        with gzip.GzipFile(filename=file_to_gzip, fileobj=direct_file, mode='w') as gzip_file:
                             # write in file if 'num_rows', used to create an empty 'csv.gz' file
                             if file_group.get('num_rows'):
                                 with io.TextIOWrapper(gzip_file, encoding='utf-8') as f:

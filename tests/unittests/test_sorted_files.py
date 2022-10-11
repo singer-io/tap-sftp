@@ -40,8 +40,11 @@ class TestSortedFiles(unittest.TestCase):
             }]
 
         mocked_all_files.return_value = files_list
-
-        files = conn.get_files("/root", "file[0-9].csv")
+        table_spec = {
+            "search_prefix": "/root",
+            "search_pattern": "file[0-9].csv"
+        }
+        files = conn.get_files(table_spec)
 
         # expected files in increasing order of "last_modified"
         expected_files_list = ["/root/file1.csv", "/root/file3.csv", "/root/file2.csv", "/root/file4.csv"]
@@ -74,7 +77,11 @@ class TestSortedFiles(unittest.TestCase):
 
         # setting "modified_since" to now
         modified_since = singer.utils.strptime_to_utc(datetime.utcnow().replace(tzinfo=pytz.UTC).isoformat())
-        files = conn.get_files("/root", "file[0-9].csv", modified_since)
+        table_spec = {
+            "search_prefix": "/root",
+            "search_pattern": "file[0-9].csv"
+        }
+        files = conn.get_files(table_spec, modified_since)
 
         # as all the modified date is lesser than "modified_since" thus, no files will be returned
         expected_files_list = []
