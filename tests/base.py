@@ -37,12 +37,14 @@ class TestSFTPBase(unittest.TestCase):
         return [[1, 'a'*131074]]
 
     def generate_simple_csv_lines_typeA(self, num_lines):
+        """Generate CSV data with integer and string dataype"""
         lines = []
         for int_value in range(num_lines):
             lines.append([int_value, self.random_string_generator(), int_value*5])
         return lines
 
     def generate_simple_csv_lines_typeB(self, num_lines):
+        """Generate CSV data with integer, datetime, float and string dataype"""
         lines = []
         start_datetime = datetime(2018, 1, 1, 19, 29, 14, 578000, tzinfo=timezone.utc)
         for int_value in range(num_lines):
@@ -51,6 +53,7 @@ class TestSFTPBase(unittest.TestCase):
         return lines
 
     def generate_simple_csv_lines_typeC(self, num_lines):
+        """Generate CSV data with integer, datetime, float and string dataype"""
         lines = []
         start_datetime = datetime(2018, 1, 1, 19, 29, 14, 578000, tzinfo=timezone.utc)
         for int_value in range(num_lines):
@@ -59,12 +62,14 @@ class TestSFTPBase(unittest.TestCase):
         return lines
 
     def generate_simple_jsonl_lines_typeA(self, num_lines):
+        """Generate JSONL data with integer and string dataype"""
         lines = []
         for int_value in range(num_lines):
             lines.append({"id": int_value, "string_col": self.random_string_generator(), "integer_col": int_value*5})
         return lines
 
     def generate_simple_jsonl_lines_typeB(self, num_lines):
+        """Generate JSONL data with integer, datetime, float and string dataype"""
         lines = []
         start_datetime = datetime(2018, 1, 1, 19, 29, 14, 578000, tzinfo=timezone.utc)
         for int_value in range(num_lines):
@@ -73,6 +78,7 @@ class TestSFTPBase(unittest.TestCase):
         return lines
 
     def generate_simple_jsonl_lines_typeC(self, num_lines):
+        """Generate JSONL data with integer, datetime, float and string dataype"""
         lines = []
         start_datetime = datetime(2018, 1, 1, 19, 29, 14, 578000, tzinfo=timezone.utc)
         for int_value in range(num_lines):
