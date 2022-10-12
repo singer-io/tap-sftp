@@ -52,13 +52,16 @@ class SFTPConnection():
     def __try_connect(self):
         if not self.__active_connection:
             try:
-                self.transport = paramiko.Transport((self.host, self.port))
+                # Disabling diffie-hellman-group16-sha512 kex since windows ssh
+                # server (srtSShServer) is not compatible with it
+                # See: https://github.com/paramiko/paramiko/issues/1455
+                self.transport = paramiko.Transport((self.host, self.port), disabled_algorithms={"kex": ["diffie-hellman-group16-sha512"]})
                 self.transport.use_compression(True)
                 self.transport.connect(username = self.username, password = self.password, hostkey = None, pkey = self.key)
                 self.sftp = paramiko.SFTPClient.from_transport(self.transport)
             except (AuthenticationException, SSHException) as ex:
                 self.transport.close()
-                self.transport = paramiko.Transport((self.host, self.port))
+                self.transport = paramiko.Transport((self.host, self.port), disabled_algorithms={"kex": ["diffie-hellman-group16-sha512"]})
                 self.transport.use_compression(True)
                 self.transport.connect(username= self.username, password = self.password, hostkey = None, pkey = None)
                 self.sftp = paramiko.SFTPClient.from_transport(self.transport)
