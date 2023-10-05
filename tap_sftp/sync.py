@@ -8,6 +8,7 @@ from tap_sftp import stats
 from singer_encodings import csv
 
 LOGGER = singer.get_logger()
+DEFAULT_ENCODING_FORMAT = "utf-8"
 
 def sync_stream(config, state, stream):
     table_name = stream.tap_stream_id
@@ -37,8 +38,9 @@ def sync_stream(config, state, stream):
     if not files:
         return records_streamed
 
+    encoding_format = config.get("encoding_format") or DEFAULT_ENCODING_FORMAT
     for f in files:
-        records_streamed += sync_file(conn, f, stream, table_spec)
+        records_streamed += sync_file(conn, f, stream, table_spec, encoding_format)
         state = singer.write_bookmark(state, table_name, 'modified_since', f['last_modified'].isoformat())
         singer.write_state(state)
 
@@ -51,7 +53,7 @@ def sync_stream(config, state, stream):
                       (socket.timeout),
                       max_tries=5,
                       factor=2)
-def sync_file(conn, f, stream, table_spec):
+def sync_file(conn, f, stream, table_spec, encoding_format):
     LOGGER.info('Syncing file "%s".', f["filepath"])
 
     try:
@@ -64,7 +66,7 @@ def sync_file(conn, f, stream, table_spec):
             'delimiter': table_spec['delimiter'],
             'file_name': f['filepath']}
 
-    readers = csv.get_row_iterators(file_handle, options=opts, infer_compression=True)
+    readers = csv.get_row_iterators(file_handle, options=opts, infer_compression=True, encoding_format=encoding_format)
 
     records_synced = 0
 
