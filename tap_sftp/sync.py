@@ -1,6 +1,7 @@
 import json
 import socket
 import backoff
+import codecs
 import singer
 from singer import metadata, utils, Transformer
 from tap_sftp import client
@@ -38,7 +39,21 @@ def sync_stream(config, state, stream):
     if not files:
         return records_streamed
 
-    encoding_format = config.get("encoding_format") or DEFAULT_ENCODING_FORMAT
+    # Get the value of "encoding_format" from the configuration, defaulting to "DEFAULT_ENCODING_FORMAT"
+    encoding_format = config.get("encoding_format", DEFAULT_ENCODING_FORMAT)
+
+    try:
+        # Check if the encoding format is not "utf-8"
+        if encoding_format != "utf-8":
+            # Attempt to look up the codec for the specified encoding format
+            codecs.lookup(encoding_format)
+    except LookupError as err:
+        # If a LookupError occurs (invalid encoding format), log a warning
+        LOGGER.warning(f"{err}, setting the default encoding format - utf-8")
+        # Fall back to the default encoding format
+        encoding_format = DEFAULT_ENCODING_FORMAT
+
+
     for f in files:
         records_streamed += sync_file(conn, f, stream, table_spec, encoding_format)
         state = singer.write_bookmark(state, table_name, 'modified_since', f['last_modified'].isoformat())
