@@ -4,7 +4,7 @@ import singer
 
 from singer import metadata
 from singer import utils
-from singer_encoding import is_valid_encoding
+from singer_encoding.utils import is_valid_encoding
 from tap_sftp.discover import discover_streams
 from tap_sftp.sync import sync_stream
 from tap_sftp.stats import STATS
