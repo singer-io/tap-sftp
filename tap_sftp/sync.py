@@ -40,7 +40,7 @@ def sync_stream(config, state, stream):
         return records_streamed
 
     # Get the value of "encoding_format" from the configuration, defaulting to "DEFAULT_ENCODING_FORMAT"
-    encoding_format = config.get("encoding_format", DEFAULT_ENCODING_FORMAT)
+    encoding_format = config.get("encoding_format") or DEFAULT_ENCODING_FORMAT
 
     for f in files:
         records_streamed += sync_file(conn, f, stream, table_spec, encoding_format)
