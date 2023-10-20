@@ -20,7 +20,7 @@ def do_discover(config):
     encoding_format = config.get("encoding_format") or DEFAULT_ENCODING_FORMAT
     if encoding_format != "utf-8":
         if not is_valid_encoding(encoding_format):
-            raise Exception(f"Unknown Encoding - {encoding_format}. Enter the valid encoding format")
+            raise Exception("Unknown Encoding - {}. Enter the valid encoding format".format(encoding_format))
     streams = discover_streams(config)
     if not streams:
         raise Exception("No streams found")
