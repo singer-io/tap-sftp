@@ -4,12 +4,12 @@ import tap_tester.menagerie   as menagerie
 import tap_tester.runner      as runner
 import os
 import json
+import random
+import string
 import zipfile
 
-# Special characters for the encoding format
-# latin-1 - ç, è, ñ, ü, ©, ¿
-# cp424 (hebrew) - כּרששׁעפּצלם
-# cp866 (russioan) - Моя учительница
+from datetime import datetime, timedelta, timezone
+from singer import utils
 
 
 RECORD_COUNT = {}
@@ -18,97 +18,128 @@ class TestSFTPEncoding(TestSFTPBase):
     def name(self):
         return "tap_tester_sftp_encoding"
 
+    def random_string_generator(self, encoding_format, size=6):
+        # standard character set
+        alphanumeric_chars = string.ascii_uppercase + string.digits
+
+        # special character set
+        special_chars = {
+            "latin-1": "áéíóúüñçàè",
+        }.get(encoding_format, "@!$%^&")
+
+        return "".join(random.choice(alphanumeric_chars) for x in range(size-2)) + "".join(random.choice(special_chars) for x in range(2))
+
+    def generate_encoded_csv_lines(self, num_lines, encoding_format="utf-8"):
+        lines = []
+        for int_value in range(num_lines):
+            lines.append(
+                [int_value, self.random_string_generator(encoding_format), int_value*5])
+        return lines
+
+    def generate_encoded_csv_lines_with_datetime(self, num_lines, encoding_format="utf-8"):
+        lines = []
+        start_datetime = datetime(2018, 1, 1, 19, 29, 14, 578000, tzinfo=timezone.utc)
+        for int_value in range(num_lines):
+            start_datetime = start_datetime + timedelta(days=5)
+            lines.append(
+                [int_value, self.random_string_generator(encoding_format), utils.strftime(start_datetime), int_value*5])
+        return lines
+
     def get_files(self):
         # TODO: write down the generator function for the special characters
         return [
             {
-                "headers": ['id', 'string_col', 'integer_col'],
-                "directory": "latin",
-                "files": ["table_1_latin.csv"],
-                "archive": 'table_1_latin.zip',
+                "headers": ["id", "string_col", "integer_col"],
+                "directory": "table_1",
+                "files": ["table_1.csv"],
+                "archive": "table_1.zip",
                 "num_rows": 50,
-                # "generator": self.generate_simple_csv_lines_typeA
+                "generator": self.generate_encoded_csv_lines,
+                "encoding_format": "latin-1"
             },
             {
-                "headers": ['id', 'string_col', 'datetime_col', 'number_col'],
-                "directory": "hebrew",
-                "files": ["table_2_hebrew.csv"],
-                "archive": 'table_2_hebrew.zip',
+                "headers": ["id", "string_col", "datetime_col", "number_col"],
+                "directory": "table_2",
+                "files": ["table_2.csv"],
+                "archive": "table_2.zip",
                 "num_rows": 50,
-                # "generator": self.generate_simple_csv_lines_typeB
+                "generator": self.generate_encoded_csv_lines_with_datetime,
+                "encoding_format": "latin-1"
             },
             {
-                "headers": ['id', 'string_col', 'integer_col'],
-                "directory": "russian",
-                "files": ["table_3_russian.csv"],
-                "archive": 'table_3_russian.zip',
+                "headers": ["id", "string_col", "integer_col"],
+                "directory": "table_3",
+                "files": ["table_3.csv"],
+                "archive": "table_3.zip",
                 "num_rows": 50,
-                # "generator": self.generate_simple_csv_lines_typeA
+                "generator": self.generate_encoded_csv_lines,
+                "encoding_format": "utf-8"
             },
         ]
 
     def setUp(self):
-        if not all([x for x in [os.getenv('TAP_SFTP_USERNAME'),
-                                os.getenv('TAP_SFTP_PASSWORD'),
-                                os.getenv('TAP_SFTP_ROOT_DIR')]]):
+        if not all([x for x in [os.getenv("TAP_SFTP_USERNAME"),
+                                os.getenv("TAP_SFTP_PASSWORD"),
+                                os.getenv("TAP_SFTP_ROOT_DIR")]]):
             #pylint: disable=line-too-long
             raise Exception("set TAP_SFTP_USERNAME, TAP_SFTP_PASSWORD, TAP_SFTP_ROOT_DIR")
 
-        root_dir = os.getenv('TAP_SFTP_ROOT_DIR')
+        root_dir = os.getenv("TAP_SFTP_ROOT_DIR")
 
         with self.get_test_connection() as client:
             # drop all csv files in root dir
             client.chdir(root_dir)
             try:
-                TestSFTPEncoding.rm('tap_tester', client)
+                TestSFTPEncoding.rm("tap_tester", client)
             except FileNotFoundError:
                 pass
-            client.mkdir('tap_tester')
-            client.chdir('tap_tester')
+            client.mkdir("tap_tester")
+            client.chdir("tap_tester")
 
             # Add subdirectories
             file_info = self.get_files()
             for entry in file_info:
-                client.mkdir(entry['directory'])
+                client.mkdir(entry["directory"])
 
             # Add csv files
             for file_group in file_info:
-                headers = file_group['headers']
-                directory = file_group['directory']
+                headers = file_group["headers"]
+                directory = file_group["directory"]
+                encoding_format = file_group["encoding_format"]
                 client.chdir(directory)
-                with client.open(file_group['archive'], 'w') as direct_file:
-                    with zipfile.ZipFile(direct_file, mode='w') as zip_file:
-                        lines = [headers] + file_group['generator'](file_group['num_rows'])
-                        total = ''
+                with client.open(file_group["archive"], "w") as direct_file:
+                    with zipfile.ZipFile(direct_file, mode="w") as zip_file:
+                        lines = [headers] + file_group["generator"](file_group["num_rows"], encoding_format)
+                        total = ""
                         for line in lines:
-                            total += ','.join((str(val) for val in line)) + '\n'
-                        for file_name in file_group['files']:
-                            zip_file.writestr(file_name, total)
-                client.chdir('..')
+                            total += ",".join((str(val) for val in line)) + "\n"
+                        for file_name in file_group["files"]:
+                            zip_file.writestr(file_name, total.encode(encoding_format))
+                client.chdir("..")
 
     def expected_first_sync_row_counts(self):
         return {
-            'table_1': 100,
-            'table_2': 150,
-            'table_3': 50
+            "table_1": 50,
+            "table_2": 50,
+            "table_3": 50
         }
 
     def get_properties(self):
         props = self.get_common_properties()
-        props['tables'] = json.dumps([
+        props["tables"] = json.dumps([
                 {
                     "table_name": "table_1",
                     "search_prefix": os.getenv("TAP_SFTP_ROOT_DIR") + "/tap_tester",
                     "delimiter": ",",
                     "search_pattern": "table_1\.zip",
-                    "key_properties": ['id']
+                    "key_properties": ["id"],
                 },
                 {
                     "table_name": "table_2",
                     "search_prefix": os.getenv("TAP_SFTP_ROOT_DIR") + "/tap_tester",
                     "delimiter": ",",
                     "search_pattern": "table_2\.zip",
-                    "key_properties": ['id'],
+                    "key_properties": ["id"],
                     "date_overrides": ["datetime_col"]
                 },
                 {
@@ -116,14 +147,14 @@ class TestSFTPEncoding(TestSFTPBase):
                     "search_prefix": os.getenv("TAP_SFTP_ROOT_DIR") + "/tap_tester",
                     "delimiter": ",",
                     "search_pattern": "table_3\.zip",
-                    "key_properties": ['id'],
+                    "key_properties": ["id"],
                     "date_overrides": ["datetime_col"]
                 }
             ])
+        props["encoding_format"] = "latin-1"
         return props
 
     def test_run(self):
-
         conn_id = connections.ensure_connection(self)
 
         # run in discovery mode
@@ -135,7 +166,7 @@ class TestSFTPEncoding(TestSFTPBase):
 
         # verify the tap discovered the right streams
         catalog = menagerie.get_catalogs(conn_id)
-        found_catalog_names = set(map(lambda c: c['tap_stream_id'], catalog))
+        found_catalog_names = set(map(lambda c: c["tap_stream_id"], catalog))
 
         # assert we find the correct streams
         self.assertEqual(self.expected_check_streams(),
@@ -143,9 +174,9 @@ class TestSFTPEncoding(TestSFTPBase):
 
         for tap_stream_id in self.expected_check_streams():
             with self.subTest(stream=tap_stream_id):
-                found_stream = [c for c in catalog if c['tap_stream_id'] == tap_stream_id][0]
+                found_stream = [c for c in catalog if c["tap_stream_id"] == tap_stream_id][0]
 
-                schema_and_metadata = menagerie.get_annotated_schema(conn_id, found_stream['stream_id'])
+                schema_and_metadata = menagerie.get_annotated_schema(conn_id, found_stream["stream_id"])
                 main_metadata = schema_and_metadata["metadata"]
                 stream_metadata = [mdata for mdata in main_metadata if mdata["breadcrumb"] == []][0]
 
@@ -155,7 +186,7 @@ class TestSFTPEncoding(TestSFTPBase):
 
 
         for stream_catalog in catalog:
-            annotated_schema = menagerie.get_annotated_schema(conn_id, stream_catalog['stream_id'])
+            annotated_schema = menagerie.get_annotated_schema(conn_id, stream_catalog["stream_id"])
             selected_metadata = connections.select_catalog_and_fields_via_metadata(conn_id,
                                                                                    stream_catalog,
                                                                                    annotated_schema,
