@@ -53,7 +53,7 @@ class TestDoDiscover(unittest.TestCase):
             mock_is_valid_encoding.assert_not_called()
         else:
             mock_is_valid_encoding.assert_called_with("latin_1")
-        mock_discover_streams.assert_called_with(config)
+        mock_discover_streams.assert_called_with(config, encoding_format)
         self.assertEqual(captured_output, sys.stdout)  # Ensure sys.stdout is restored
 
     @patch("tap_sftp.is_valid_encoding", return_value=False)

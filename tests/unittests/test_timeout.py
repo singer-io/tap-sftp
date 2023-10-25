@@ -147,14 +147,14 @@ class TimeoutBackoff(unittest.TestCase):
         """
         # mock 'get_schema_for_table' and raise 'socket.timeout' error
         mocked_get_schema_for_table.side_effect = socket.timeout
-
+        encoding_format = "utf-8"
         table_spec = {
             "table_name": "test"
         }
         before_time = datetime.now()
         with self.assertRaises(socket.timeout):
             # function call
-            discover.get_schema("test_conn", table_spec)
+            discover.get_schema("test_conn", table_spec, encoding_format)
         after_time = datetime.now()
 
         # verify that the tap backoff for 60 seconds
@@ -187,11 +187,12 @@ class TimeoutBackoff(unittest.TestCase):
         file = {
             "filepath": "/root/file.csv"
         }
+        encoding_format = "utf-8"
         # create connection
         conn = client.connection(config=config)
         with self.assertRaises(socket.timeout):
             # function call
-            sync.sync_file(conn=conn, f=file, stream="test_stream", table_spec=table_spec)
+            sync.sync_file(conn=conn, f=file, stream="test_stream", table_spec=table_spec, encoding_format=encoding_format)
 
         # verify that the tap backoff for 5 times
         self.assertEquals(mocked_get_row_iterators.call_count, 5)
