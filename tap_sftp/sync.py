@@ -6,6 +6,7 @@ import singer
 from singer import metadata, utils, Transformer
 from tap_sftp import client
 from tap_sftp import stats
+from tap_sftp.helper import write_record
 from singer_encodings import csv
 
 LOGGER = singer.get_logger()
@@ -86,7 +87,8 @@ def sync_file(conn, f, stream, table_spec, encoding_format):
 
                 to_write = transformer.transform(rec, stream.schema.to_dict(), metadata.to_map(stream.metadata))
 
-                singer.write_record(stream.tap_stream_id, to_write)
+                write_record(stream.tap_stream_id, to_write, ensure_ascii=False)
+                # singer.write_record(stream.tap_stream_id, to_write)
                 records_synced += 1
 
     stats.add_file_data(table_spec, f['filepath'], f['last_modified'], records_synced)
