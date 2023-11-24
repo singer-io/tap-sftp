@@ -4,7 +4,7 @@ import singer
 
 from singer import metadata
 from singer import utils
-from singer_encodings.utils import is_valid_encoding
+from tap_sftp.utils import is_valid_encoding
 from tap_sftp.discover import discover_streams
 from tap_sftp.sync import sync_stream
 from tap_sftp.stats import STATS
@@ -12,7 +12,8 @@ from terminaltables import AsciiTable
 
 REQUIRED_CONFIG_KEYS = ["username", "port", "private_key_file", "host"]
 LOGGER = singer.get_logger()
-DEFAULT_ENCODING_FORMAT = "utf-8"
+# DEFAULT_ENCODING_FORMAT = "utf-8"
+DEFAULT_ENCODING_FORMAT = "latin-1"
 
 def do_discover(config):
     LOGGER.info("Starting discover")
@@ -79,7 +80,7 @@ def do_sync(config, catalog, state):
 
 @singer.utils.handle_top_exception(LOGGER)
 def main():
-    args = utils.parse_args(REQUIRED_CONFIG_KEYS)
+    args = singer.utils.parse_args(REQUIRED_CONFIG_KEYS)
 
     if args.discover:
         do_discover(args.config)

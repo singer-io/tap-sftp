@@ -7,7 +7,7 @@ from singer import metadata, utils, Transformer
 from tap_sftp import client
 from tap_sftp import stats
 from tap_sftp.helper import write_record
-from singer_encodings import csv
+from tap_sftp import csv
 
 LOGGER = singer.get_logger()
 DEFAULT_ENCODING_FORMAT = "utf-8"

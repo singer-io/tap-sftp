@@ -13,7 +13,6 @@ setup(
         "singer-python==5.12.1",
         'paramiko==2.6.0',
         'backoff==1.8.0',
-        'singer-encodings==0.1.1',
         'terminaltables==3.1.0',
     ],
     extras_require={
@@ -32,7 +31,8 @@ setup(
     """,
     packages=["tap_sftp"],
     package_data = {
-        "schemas": ["tap_sftp/schemas/*.json"]
+        "schemas": ["tap_sftp/schemas/*.json"],
+        "singer_encodings": ["tap_sftp/singer_encodings/*.py"]
     },
     include_package_data=True,
 )

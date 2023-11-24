@@ -3,7 +3,7 @@ import socket
 import backoff
 import singer
 
-from singer_encodings import json_schema
+from tap_sftp import json_schema
 from singer import metadata
 from tap_sftp import client
 
