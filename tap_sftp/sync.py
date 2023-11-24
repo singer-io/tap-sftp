@@ -10,7 +10,8 @@ from tap_sftp.helper import write_record
 from tap_sftp import csv
 
 LOGGER = singer.get_logger()
-DEFAULT_ENCODING_FORMAT = "utf-8"
+# DEFAULT_ENCODING_FORMAT = "utf-8"
+DEFAULT_ENCODING_FORMAT = "latin-1"
 
 def sync_stream(config, state, stream):
     table_name = stream.tap_stream_id
