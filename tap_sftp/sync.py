@@ -88,7 +88,6 @@ def sync_file(conn, f, stream, table_spec, encoding_format):
                 to_write = transformer.transform(rec, stream.schema.to_dict(), metadata.to_map(stream.metadata))
 
                 write_record(stream.tap_stream_id, to_write, ensure_ascii=False)
-                # singer.write_record(stream.tap_stream_id, to_write)
                 records_synced += 1
 
     stats.add_file_data(table_spec, f['filepath'], f['last_modified'], records_synced)

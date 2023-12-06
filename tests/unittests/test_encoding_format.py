@@ -37,16 +37,13 @@ class TestDoDiscover(unittest.TestCase):
         config = {"encoding_format": encoding_format}
         captured_output = sys.stdout
 
-        try:
-            with patch("sys.stdout", new_callable=StringIO) as mock_stdout:
-                do_discover(config)
-                output = mock_stdout.getvalue().strip()
-                expected_output = json.dumps(
-                    {"streams": ["stream1", "stream2"]}, indent=2
-                )
-                self.assertEqual(output, expected_output)
-        except Exception as e:
-            self.fail(f"Exception occurred: {str(e)}")
+        with patch("sys.stdout", new_callable=StringIO) as mock_stdout:
+            do_discover(config)
+            output = mock_stdout.getvalue().strip()
+            expected_output = json.dumps(
+                {"streams": ["stream1", "stream2"]}, indent=2
+            )
+            self.assertEqual(output, expected_output)
 
         if encoding_format == "utf-8":
             # Bypassing encoding check for `utf-8` as it is widely used

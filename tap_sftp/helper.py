@@ -13,7 +13,8 @@ def write_message(message, ensure_ascii=True):
 
 
 def write_record(stream_name, record, stream_alias=None, time_extracted=None, ensure_ascii=True):
-    """Write a single record for the given stream.
+    """
+    Write a single record for the given stream.
     
     """
     write_message(RecordMessage(stream=(stream_alias or stream_name),
