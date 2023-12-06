@@ -11,8 +11,8 @@ import zipfile
 from datetime import datetime, timedelta, timezone
 from singer import utils
 
-
 RECORD_COUNT = {}
+records = {}
 class TestSFTPEncoding(TestSFTPBase):
 
     def name(self):
@@ -24,25 +24,27 @@ class TestSFTPEncoding(TestSFTPBase):
 
         # special character set
         special_chars = {
-            "latin-1": "áéíóúüñçàè",
+            "latin-1": "áéíóúüñçàè"
         }.get(encoding_format, "@!$%^&")
 
         return "".join(random.choice(alphanumeric_chars) for x in range(size-2)) + "".join(random.choice(special_chars) for x in range(2))
 
-    def generate_encoded_csv_lines(self, num_lines, encoding_format="utf-8"):
+    def generate_encoded_csv_lines(self, num_lines, table_name, encoding_format="utf-8"):
         lines = []
         for int_value in range(num_lines):
             lines.append(
                 [int_value, self.random_string_generator(encoding_format), int_value*5])
+        records[table_name] = lines
         return lines
 
-    def generate_encoded_csv_lines_with_datetime(self, num_lines, encoding_format="utf-8"):
+    def generate_encoded_csv_lines_with_datetime(self, num_lines, table_name, encoding_format="utf-8"):
         lines = []
         start_datetime = datetime(2018, 1, 1, 19, 29, 14, 578000, tzinfo=timezone.utc)
         for int_value in range(num_lines):
             start_datetime = start_datetime + timedelta(days=5)
             lines.append(
                 [int_value, self.random_string_generator(encoding_format), utils.strftime(start_datetime), int_value*5])
+        records[table_name] = lines
         return lines
 
     def get_files(self):
@@ -77,6 +79,11 @@ class TestSFTPEncoding(TestSFTPBase):
             },
         ]
 
+    def get_headers_for_table(self, target_directory):
+        for file_info in self.get_files():
+            if file_info["directory"] == target_directory:
+                return file_info["headers"]
+
     def setUp(self):
         if not all([x for x in [os.getenv("TAP_SFTP_USERNAME"),
                                 os.getenv("TAP_SFTP_PASSWORD"),
@@ -109,7 +116,7 @@ class TestSFTPEncoding(TestSFTPBase):
                 client.chdir(directory)
                 with client.open(file_group["archive"], "w") as direct_file:
                     with zipfile.ZipFile(direct_file, mode="w") as zip_file:
-                        lines = [headers] + file_group["generator"](file_group["num_rows"], encoding_format)
+                        lines = [headers] + file_group["generator"](file_group["num_rows"], directory, encoding_format)
                         total = ""
                         for line in lines:
                             total += ",".join((str(val) for val in line)) + "\n"
@@ -207,7 +214,19 @@ class TestSFTPEncoding(TestSFTPBase):
                                                                    self.expected_first_sync_streams(),
                                                                    self.expected_pks())
 
-        # Verify that the full table was syncd
+        # Verify that the full table was synced
         for tap_stream_id in self.expected_first_sync_streams():
-            self.assertEqual(self.expected_first_sync_row_counts()[tap_stream_id],
-                             record_count_by_stream[tap_stream_id])
+            expected_row_count = self.expected_first_sync_row_counts()[tap_stream_id]
+            actual_row_count = record_count_by_stream[tap_stream_id]
+            self.assertEqual(expected_row_count, actual_row_count)
+
+            # Verify that the records match after extraction
+            initial_records = records[tap_stream_id]
+            extracted_messages = messages_by_stream[tap_stream_id]["messages"]
+            headers = self.get_headers_for_table(tap_stream_id)
+            
+            for i in range(0, len(initial_records)):
+                initial_record = initial_records[i]
+                extracted_record = [extracted_messages[i]["data"][key] for key in headers]
+                self.assertEqual(initial_record, extracted_record)
+
