@@ -192,7 +192,10 @@ class TimeoutBackoff(unittest.TestCase):
         conn = client.connection(config=config)
         with self.assertRaises(socket.timeout):
             # function call
-            sync.sync_file(conn=conn, f=file, stream="test_stream", table_spec=table_spec, encoding_format=encoding_format)
+            sync.sync_file(conn=conn, 
+                           f=file, stream="test_stream", 
+                           table_spec=table_spec, 
+                           encoding_format=encoding_format)
 
         # verify that the tap backoff for 5 times
         self.assertEquals(mocked_get_row_iterators.call_count, 5)

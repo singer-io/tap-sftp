@@ -56,7 +56,11 @@ class TestPermissionError(unittest.TestCase):
 
         conn = client.SFTPConnection("10.0.0.1", "username", port="22")
 
-        rows_synced = sync.sync_file(conn, {"filepath": "/root_dir/file.csv.gz", "last_modified": "2020-01-01"}, None, {"key_properties": ["id"], "delimiter": ","}, encoding_format=DEFAULT_ENCODING_FORMAT)
+        rows_synced = sync.sync_file(conn, 
+                                     {"filepath": "/root_dir/file.csv.gz", "last_modified": "2020-01-01"}, 
+                                     None, 
+                                     {"key_properties": ["id"], "delimiter": ","}, 
+                                     encoding_format=DEFAULT_ENCODING_FORMAT)
         # check if "csv.get_row_iterators" is called if it is called then error has not occurred
         # if it is not called then error has occured and function returned from the except block
         self.assertEquals(1, mocked_get_row_iterators.call_count)
@@ -69,8 +73,11 @@ class TestPermissionError(unittest.TestCase):
 
         conn = client.SFTPConnection("10.0.0.1", "username", port="22")
 
-        rows_synced = sync.sync_file(conn, {"filepath": "/root_dir/file.csv.gz", "last_modified": "2020-01-01"}, None, \
-                                     {"key_properties": ["id"], "delimiter": ","}, encoding_format=DEFAULT_ENCODING_FORMAT)
+        rows_synced = sync.sync_file(conn, 
+                                     {"filepath": "/root_dir/file.csv.gz", "last_modified": "2020-01-01"}, 
+                                     None,
+                                     {"key_properties": ["id"], "delimiter": ","}, 
+                                     encoding_format=DEFAULT_ENCODING_FORMAT)
         # check if "csv.get_row_iterators" is called if it is called then error has not occurred
         # if it is not called then error has occured and function returned from the except block
         self.assertEquals(0, mocked_get_row_iterators.call_count)
@@ -84,7 +91,11 @@ class TestPermissionError(unittest.TestCase):
 
         conn = client.SFTPConnection("10.0.0.1", "username", port="22")
 
-        rows_synced = sync.sync_file(conn, {"filepath": "/root_dir/file.csv.gz", "last_modified": "2020-01-01"}, None, {"key_properties": ["id"], "delimiter": ","}, encoding_format=DEFAULT_ENCODING_FORMAT)
+        rows_synced = sync.sync_file(conn, 
+                                     {"filepath": "/root_dir/file.csv.gz", "last_modified": "2020-01-01"}, 
+                                     None, 
+                                     {"key_properties": ["id"], "delimiter": ","}, 
+                                     encoding_format=DEFAULT_ENCODING_FORMAT)
         # check if "csv.get_row_iterators" is called if it is called then error has not occurred
         # if it is not called then error has occured and function returned from the except block
         self.assertEquals(0, mocked_get_row_iterators.call_count)

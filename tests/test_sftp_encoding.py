@@ -226,7 +226,6 @@ class TestSFTPEncoding(TestSFTPBase):
             headers = self.get_headers_for_table(tap_stream_id)
             
             for i in range(0, len(initial_records)):
-                initial_record = initial_records[i]
                 extracted_record = [extracted_messages[i]["data"][key] for key in headers]
-                self.assertEqual(initial_record, extracted_record)
+                self.assertEqual(initial_records[i], extracted_record)
 
