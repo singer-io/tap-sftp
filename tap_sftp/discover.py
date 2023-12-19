@@ -9,7 +9,7 @@ from tap_sftp import client
 
 LOGGER= singer.get_logger()
 
-def discover_streams(config):
+def discover_streams(config, encoding_format):
     streams = []
 
     conn = client.connection(config)
@@ -17,7 +17,7 @@ def discover_streams(config):
 
     tables = json.loads(config['tables'])
     for table_spec in tables:
-        schema, stream_md = get_schema(conn, table_spec)
+        schema, stream_md = get_schema(conn, table_spec, encoding_format)
 
         streams.append(
             {
@@ -38,9 +38,9 @@ def discover_streams(config):
                       interval=10,
                       jitter=None)
 # generate schema
-def get_schema(conn, table_spec):
+def get_schema(conn, table_spec, encoding_format):
     LOGGER.info('Sampling records to determine table JSON schema "%s".', table_spec['table_name'])
-    schema = json_schema.get_schema_for_table(conn, table_spec)
+    schema = json_schema.get_schema_for_table(conn, table_spec, encoding_format)
     stream_md = metadata.get_standard_metadata(schema,
                                                key_properties=table_spec.get('key_properties'),
                                                replication_method='INCREMENTAL')

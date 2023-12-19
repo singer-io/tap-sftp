@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.2.0
+  * Support Multiple Encoding Formats [#36](https://github.com/singer-io/tap-sftp/pull/44)
+
 ## 1.1.2
   * Request Timeout Implementation [#36](https://github.com/singer-io/tap-sftp/pull/36)
 
