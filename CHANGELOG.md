@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.2.0
+  * Updates for python 3.11 [#46](https://github.com/singer-io/tap-sftp/pull/46)
+
 ## 1.1.2
   * Request Timeout Implementation [#36](https://github.com/singer-io/tap-sftp/pull/36)
 
