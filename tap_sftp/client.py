@@ -162,11 +162,16 @@ class SFTPConnection():
         for f in matching_files:
             LOGGER.info("Found file: %s", f['filepath'])
 
+        temp_matching_files = []
         if modified_since is not None:
-            matching_files = [f for f in matching_files if f["last_modified"] > modified_since]
+            for file in matching_files:
+                if file["last_modified"] > modified_since:
+                    temp_matching_files.append(file)
+                else:
+                    LOGGER.info("Skipping File %s, since modified_at is lesser", file['filepath'])
 
         # sort files in increasing order of "last_modified"
-        sorted_files = sorted(matching_files, key = lambda x: (x['last_modified']).timestamp())
+        sorted_files = sorted(temp_matching_files, key = lambda x: (x['last_modified']).timestamp())
         return sorted_files
 
     # retry 5 times for timeout error
