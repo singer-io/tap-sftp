@@ -40,7 +40,7 @@ def discover_streams(config):
 # generate schema
 def get_schema(conn, table_spec):
     LOGGER.info('Sampling records to determine table JSON schema "%s".', table_spec['table_name'])
-    schema = json_schema.get_schema_for_table(conn, table_spec)
+    schema = json_schema.get_schema_for_table(conn, table_spec, encoding_format="utf-8-sig")
     stream_md = metadata.get_standard_metadata(schema,
                                                key_properties=table_spec.get('key_properties'),
                                                replication_method='INCREMENTAL')
