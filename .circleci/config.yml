@@ -23,7 +23,7 @@ jobs:
           name: 'Unit Tests'
           command: |
             source /usr/local/share/virtualenvs/tap-sftp/bin/activate
-            pip install nose coverage
+            pip install nose coverage parameterized
             nosetests --with-coverage --cover-erase --cover-package=tap_sftp --cover-html-dir=htmlcov tests/unittests
             coverage html
       - store_test_results:

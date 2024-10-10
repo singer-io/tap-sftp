@@ -1,13 +1,16 @@
 import json
 import socket
 import backoff
+import codecs
 import singer
 from singer import metadata, utils, Transformer
 from tap_sftp import client
 from tap_sftp import stats
+from tap_sftp.helper import write_record
 from singer_encodings import csv
 
 LOGGER = singer.get_logger()
+DEFAULT_ENCODING_FORMAT = "utf-8"
 
 def sync_stream(config, state, stream):
     table_name = stream.tap_stream_id
@@ -37,8 +40,11 @@ def sync_stream(config, state, stream):
     if not files:
         return records_streamed
 
+    # Get the value of "encoding_format" from the configuration, defaulting to "DEFAULT_ENCODING_FORMAT"
+    encoding_format = config.get("encoding_format") or DEFAULT_ENCODING_FORMAT
+
     for f in files:
-        records_streamed += sync_file(conn, f, stream, table_spec)
+        records_streamed += sync_file(conn, f, stream, table_spec, encoding_format)
         state = singer.write_bookmark(state, table_name, 'modified_since', f['last_modified'].isoformat())
         singer.write_state(state)
 
@@ -51,7 +57,7 @@ def sync_stream(config, state, stream):
                       (socket.timeout),
                       max_tries=5,
                       factor=2)
-def sync_file(conn, f, stream, table_spec):
+def sync_file(conn, f, stream, table_spec, encoding_format):
     LOGGER.info('Syncing file "%s".', f["filepath"])
 
     try:
@@ -64,7 +70,7 @@ def sync_file(conn, f, stream, table_spec):
             'delimiter': table_spec['delimiter'],
             'file_name': f['filepath']}
 
-    readers = csv.get_row_iterators(file_handle, options=opts, infer_compression=True)
+    readers = csv.get_row_iterators(file_handle, options=opts, infer_compression=True, encoding_format=encoding_format)
 
     records_synced = 0
 
@@ -81,7 +87,7 @@ def sync_file(conn, f, stream, table_spec):
 
                 to_write = transformer.transform(rec, stream.schema.to_dict(), metadata.to_map(stream.metadata))
 
-                singer.write_record(stream.tap_stream_id, to_write)
+                write_record(stream.tap_stream_id, to_write, ensure_ascii=False)
                 records_synced += 1
 
     stats.add_file_data(table_spec, f['filepath'], f['last_modified'], records_synced)
