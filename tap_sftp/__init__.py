@@ -18,9 +18,8 @@ def do_discover(config):
     LOGGER.info("Starting discover")
     # validate the encoding format
     encoding_format = config.get("encoding_format") or DEFAULT_ENCODING_FORMAT
-    if encoding_format != "utf-8":
-        if not is_valid_encoding(encoding_format):
-            raise Exception("Unknown Encoding - {}. Enter the valid encoding format".format(encoding_format))
+    if encoding_format != "utf-8" and not is_valid_encoding(encoding_format):
+        raise Exception("Unknown Encoding - {}. Enter the valid encoding format".format(encoding_format))
     streams = discover_streams(config, encoding_format)
     if not streams:
         raise Exception("No streams found")
