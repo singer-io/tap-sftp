@@ -4,6 +4,7 @@ import singer
 
 from singer import metadata
 from singer import utils
+from singer_encodings.utils import is_valid_encoding
 from tap_sftp.discover import discover_streams
 from tap_sftp.sync import sync_stream
 from tap_sftp.stats import STATS
@@ -11,10 +12,15 @@ from terminaltables import AsciiTable
 
 REQUIRED_CONFIG_KEYS = ["username", "port", "private_key_file", "host"]
 LOGGER = singer.get_logger()
+DEFAULT_ENCODING_FORMAT = "utf-8"
 
 def do_discover(config):
     LOGGER.info("Starting discover")
-    streams = discover_streams(config)
+    # validate the encoding format
+    encoding_format = config.get("encoding_format") or DEFAULT_ENCODING_FORMAT
+    if not is_valid_encoding(encoding_format):
+        raise Exception("Unknown Encoding - {}. Enter the valid encoding format".format(encoding_format))
+    streams = discover_streams(config, encoding_format)
     if not streams:
         raise Exception("No streams found")
     catalog = {"streams": streams}
