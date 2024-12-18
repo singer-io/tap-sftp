@@ -19,7 +19,7 @@ setup(
         'dev': [
             'ipdb',
             'pylint',
-            'nose'
+            'nose2'
         ],
         'test': [
             'paramiko==2.6.0'
