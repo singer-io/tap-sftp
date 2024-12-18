@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.2.1
+  * Removes deprecated dependency terminaltables [#47](https://github.com/singer-io/tap-sftp/pull/47)
+
 ## 1.2.0
   * Support Multiple Encoding Formats [#36](https://github.com/singer-io/tap-sftp/pull/44)
 

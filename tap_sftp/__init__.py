@@ -8,7 +8,6 @@ from singer_encodings.utils import is_valid_encoding
 from tap_sftp.discover import discover_streams
 from tap_sftp.sync import sync_stream
 from tap_sftp.stats import STATS
-from terminaltables import AsciiTable
 
 REQUIRED_CONFIG_KEYS = ["username", "port", "private_key_file", "host"]
 LOGGER = singer.get_logger()
@@ -69,11 +68,10 @@ def do_sync(config, catalog, state):
                          file_data['row_count'],
                          file_data['last_modified']])
 
-    data = headers + rows
-    table = AsciiTable(data, title='Extraction Summary')
-    LOGGER.info("\n\n%s", table.table)
-
-
+    LOGGER.info("\n**** Sync Summary:")
+    LOGGER.info(next(iter(headers), None))
+    for row in rows:
+        LOGGER.info(row)
     LOGGER.info('Done syncing.')
 
 @singer.utils.handle_top_exception(LOGGER)
