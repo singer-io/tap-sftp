@@ -44,7 +44,7 @@ class SFTPConnection():
     # If connection is snapped during connect flow, retry up to a
     # minute for SSH connection to succeed. 2^6 + 2^5 + ...
     @backoff.on_exception(backoff.expo,
-                          (EOFError),
+                          (EOFError, SSHException),
                           max_tries=6,
                           on_backoff=handle_backoff,
                           jitter=None,
