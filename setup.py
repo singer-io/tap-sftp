@@ -10,7 +10,7 @@ setup(
     classifiers=["Programming Language :: Python :: 3 :: Only"],
     py_modules=["tap_sftp"],
     install_requires=[
-        "singer-python==5.12.1",
+        "singer-python==5.13.2",
         'paramiko==2.6.0',
         'backoff==1.8.0',
         'singer-encodings==0.1.3',
