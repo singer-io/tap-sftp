@@ -3,14 +3,14 @@ from setuptools import setup
 
 setup(
     name="tap-sftp",
-    version="1.2.1",
+    version="1.2.2",
     description="Singer.io tap for extracting data",
     author="Stitch",
     url="http://singer.io",
     classifiers=["Programming Language :: Python :: 3 :: Only"],
     py_modules=["tap_sftp"],
     install_requires=[
-        "singer-python==5.12.1",
+        "singer-python==5.13.2",
         'paramiko==2.6.0',
         'backoff==1.8.0',
         'singer-encodings==0.1.3',

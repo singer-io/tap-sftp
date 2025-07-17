@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.2.2
+* Dependency upgrades [#49](https://github.com/singer-io/tap-sftp/pull/49)
+
 ## 1.2.1
   * Removes deprecated dependency terminaltables [#47](https://github.com/singer-io/tap-sftp/pull/47)
 
