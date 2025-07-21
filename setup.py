@@ -11,8 +11,8 @@ setup(
     py_modules=["tap_sftp"],
     install_requires=[
         "singer-python==5.13.2",
-        'paramiko==2.6.0',
-        'backoff==1.8.0',
+        'paramiko==3.4.0',
+        'backoff==1.10.0',
         'singer-encodings==0.1.3',
     ],
     extras_require={
