@@ -13,7 +13,7 @@ setup(
         "singer-python==5.13.2",
         'paramiko==3.4.0',
         'backoff==1.10.0',
-        'singer-encodings==0.1.3',
+        'singer-encodings @ git+https://github.com/singer-io/singer-encodings.git@fully-load-zip-before-extracting',
     ],
     extras_require={
         'dev': [
