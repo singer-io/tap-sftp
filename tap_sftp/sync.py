@@ -70,7 +70,7 @@ def sync_file(conn, f, stream, table_spec, encoding_format):
             'delimiter': table_spec['delimiter'],
             'file_name': f['filepath']}
 
-    readers = csv.get_row_iterators(file_handle, options=opts, infer_compression=True, encoding_format=encoding_format)
+    readers = csv.get_row_iterators(file_handle, options=opts, infer_compression=True, encoding_format=encoding_format, conn=conn)
 
     records_synced = 0
 
