@@ -35,7 +35,7 @@ class TestDoDiscover(unittest.TestCase):
                 {"streams": ["stream1", "stream2"]}, indent=2
             )
             self.assertEqual(output, expected_output)
-            mock_is_valid_encoding.assert_not_called()
+            mock_is_valid_encoding.assert_called_once_with("utf-8")
         mock_discover_streams.assert_called_with(config, "utf-8")
         self.assertEqual(captured_output, sys.stdout)  # Ensure sys.stdout is restored
 
