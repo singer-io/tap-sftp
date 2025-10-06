@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.2.3
+* Bump singer-encodings [#51](https://github.com/singer-io/tap-sftp/pull/51)
+
 ## 1.2.2
 * Dependency upgrades [#49](https://github.com/singer-io/tap-sftp/pull/49)
 

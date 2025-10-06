@@ -34,7 +34,7 @@ jobs:
           name: 'Tap Tester'
           command: |
             source /usr/local/share/virtualenvs/tap-tester/bin/activate
-            uv pip install --upgrade awscli
+            uv pip install --upgrade awscli paramiko==2.6.0
             aws s3 cp s3://com-stitchdata-dev-deployment-assets/environments/tap-tester/tap_tester_sandbox dev_env.sh
             source dev_env.sh
             run-test --tap=tap-sftp tests
