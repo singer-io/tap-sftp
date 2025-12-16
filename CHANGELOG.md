@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.30.0
+* Bump Paramiko to 3.5.1 [#52](https://github.com/singer-io/tap-sftp/pull/52)
+
 ## 1.2.3
 * Bump singer-encodings [#51](https://github.com/singer-io/tap-sftp/pull/51)
 
