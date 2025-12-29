@@ -47,7 +47,7 @@ class TestSortedFiles(unittest.TestCase):
         expected_files_list = ["/root/file1.csv", "/root/file3.csv", "/root/file2.csv", "/root/file4.csv"]
         actual_files_list = [f["filepath"] for f in files]
 
-        self.assertEquals(expected_files_list, actual_files_list)
+        self.assertEqual(expected_files_list, actual_files_list)
 
     def test_sorted_files_negative(self, mocked_all_files):
         conn = client.SFTPConnection("10.0.0.1", "username", port="22")
@@ -80,4 +80,4 @@ class TestSortedFiles(unittest.TestCase):
         expected_files_list = []
         actual_files_list = [f["filepath"] for f in files]
 
-        self.assertEquals(expected_files_list, actual_files_list)
+        self.assertEqual(expected_files_list, actual_files_list)

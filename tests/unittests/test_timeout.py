@@ -24,10 +24,10 @@ class TestTimeoutValue(unittest.TestCase):
         }
 
         # create connection
-        conn = client.connection(config=config)  
+        conn = client.connection(config=config)
 
         # verify the expected timeout value is set
-        self.assertEquals(conn.request_timeout, 300)
+        self.assertEqual(conn.request_timeout, 300)
 
     def test_timeout_int_value_passed_in_config(self):
         """
@@ -45,10 +45,10 @@ class TestTimeoutValue(unittest.TestCase):
         }
 
         # create connection
-        conn = client.connection(config=config)  
+        conn = client.connection(config=config)
 
         # verify the expected timeout value is set
-        self.assertEquals(conn.request_timeout, 100.0)
+        self.assertEqual(conn.request_timeout, 100.0)
 
     def test_timeout_string_value_passed_in_config(self):
         """
@@ -66,10 +66,10 @@ class TestTimeoutValue(unittest.TestCase):
         }
 
         # create connection
-        conn = client.connection(config=config)  
+        conn = client.connection(config=config)
 
         # verify the expected timeout value is set
-        self.assertEquals(conn.request_timeout, 100.0)
+        self.assertEqual(conn.request_timeout, 100.0)
 
     def test_timeout_empty_value_passed_in_config(self):
         """
@@ -87,10 +87,10 @@ class TestTimeoutValue(unittest.TestCase):
         }
 
         # create connection
-        conn = client.connection(config=config)  
+        conn = client.connection(config=config)
 
         # verify the expected timeout value is set
-        self.assertEquals(conn.request_timeout, 300)
+        self.assertEqual(conn.request_timeout, 300)
 
     def test_timeout_0_value_passed_in_config(self):
         """
@@ -108,10 +108,10 @@ class TestTimeoutValue(unittest.TestCase):
         }
 
         # create connection
-        conn = client.connection(config=config)  
+        conn = client.connection(config=config)
 
         # verify the expected timeout value is set
-        self.assertEquals(conn.request_timeout, 300)
+        self.assertEqual(conn.request_timeout, 300)
 
     def test_timeout_string_0_value_passed_in_config(self):
         """
@@ -129,10 +129,10 @@ class TestTimeoutValue(unittest.TestCase):
         }
 
         # create connection
-        conn = client.connection(config=config)  
+        conn = client.connection(config=config)
 
         # verify the expected timeout value is set
-        self.assertEquals(conn.request_timeout, 300)
+        self.assertEqual(conn.request_timeout, 300)
 
 class TimeoutBackoff(unittest.TestCase):
     """
@@ -192,13 +192,13 @@ class TimeoutBackoff(unittest.TestCase):
         conn = client.connection(config=config)
         with self.assertRaises(socket.timeout):
             # function call
-            sync.sync_file(conn=conn, 
-                           f=file, stream="test_stream", 
-                           table_spec=table_spec, 
+            sync.sync_file(conn=conn,
+                           f=file, stream="test_stream",
+                           table_spec=table_spec,
                            encoding_format=encoding_format)
 
         # verify that the tap backoff for 5 times
-        self.assertEquals(mocked_get_row_iterators.call_count, 5)
+        self.assertEqual(mocked_get_row_iterators.call_count, 5)
 
     @mock.patch("tap_sftp.client.SFTPConnection.sftp")
     def test_timeout_backoff__get_files_by_prefix(self, mocked_sftp):
@@ -256,4 +256,4 @@ class TimeoutBackoff(unittest.TestCase):
             conn.get_file_handle({"filepath": "/root/file.csv"})
 
         # verify that the tap backoff for 5 times
-        self.assertEquals(mocked_sftp.open.call_count, 5)
+        self.assertEqual(mocked_sftp.open.call_count, 5)
